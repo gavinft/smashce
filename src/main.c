@@ -60,9 +60,9 @@ static bool step() {
 
 void draw() {
     /* Initialize graphics drawing */
-    gfx_FillScreen(1);
+    gfx_FillScreen(2);
 
-    gfx_SetColor(0);
+    gfx_SetColor(3);
     gfx_Rectangle(phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
     dbg_printf("phy_col_left: %f\nphy_col_top: %f\nextent x: %f\nextent y: %f\n\n", phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
 
