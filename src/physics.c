@@ -9,7 +9,7 @@ void phy_step(float dt) {
     for (int i = 0; i < PHY_RBS_LEN; i++) { // TODO: optimize loop (short circuit entire loop)
         if (!phy_rbs[i])
             continue;
-        rb_t* rb = phy_rbs + i;
+        rb_t* rb = phy_rbs[i];
         collider_t* this = &rb->col;
         
         rb->vel.y += PHY_GRAVITY * dt;
@@ -22,7 +22,7 @@ void phy_step(float dt) {
             if (phy_colliders[i] == &rb->col)
                 continue;
 
-            collider_t* that = phy_colliders + i;
+            collider_t* that = phy_colliders[i];
 
             if (that->layer & phy_layer_player)
                 continue;
