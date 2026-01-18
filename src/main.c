@@ -1,10 +1,13 @@
 #include <stdbool.h>
-#include <ti/getcsc.h>
+#include <time.h>
 #include <graphx.h>
 #include <keypadc.h>
 
-/* Include the converted graphics file */
+#include "physics.h"
 #include "gfx/gfx.h"
+
+clock_t last_time;
+#define FRAME_TIME CLOCKS_PER_SEC / 30.0
 
 static void begin();
 static void end();
@@ -22,6 +25,8 @@ int main(void)
     while (step()) { // No rendering allowed in step!
         draw(); // As little non-rendering logic as possible
         gfx_SwapDraw(); // Queue the buffered frame to be displayed
+        gfx_Wait();
+        while (clock() < last_time + FRAME_TIME); // wait for end of frame
     }
 
     gfx_End();
@@ -39,7 +44,11 @@ static void end() {
 }
 
 static bool step() {
+    last_time = clock();
     kb_Scan();
+
+    phy_step(1.0 / 30.0);
+
     return !kb_IsDown(kb_KeyEnter);
 }
 
