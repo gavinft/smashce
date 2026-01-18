@@ -7,8 +7,8 @@ ICON = icon.png
 DESCRIPTION = "Super Smash Bros CE"
 COMPRESSED = NO
 
-CFLAGS = -Wall -Wextra -Oz
-CXXFLAGS = -Wall -Wextra -Oz
+CFLAGS = -Wall -Wextra -Oz -Werror=return-type
+CXXFLAGS = -Wall -Wextra -Oz -Werror=return-type
 
 # ----------------------------
 
