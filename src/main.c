@@ -11,6 +11,7 @@ clock_t last_time;
 #define FRAME_TIME CLOCKS_PER_SEC / 30.0
 
 collider_t stage_col = {.pos = {160, 190}, .extent = {130, 20}, .layer = phy_layer_stage};
+collider_t box_col = {.pos = {160, 110}, .extent = {20, 20}, .layer = phy_layer_stage};
 rb_t player = {.col = {.pos = {160, 30}, .extent = {16 / 2, 27.0f / 2}, .layer = phy_layer_player}};
 
 static void begin();
@@ -43,6 +44,7 @@ static void begin() {
     phy_rbs[0] = &player;
     phy_colliders[0] = &stage_col;
     phy_colliders[1] = &player.col;
+    phy_colliders[2] = &box_col;
 }
 
 static void end() {
@@ -72,6 +74,7 @@ void draw() {
     gfx_SetColor(3);
     gfx_Rectangle(phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
     dbg_printf("phy_col_left: %f\nphy_col_top: %f\nextent x: %f\nextent y: %f\n\n", phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
+    gfx_Rectangle(phy_col_left(box_col), phy_col_top(box_col), box_col.extent.x * 2, box_col.extent.y * 2);
 
     /* A transparent sprite allows the background to show */
     gfx_TransparentSprite(oiram, player.col.pos.x + oiram_width / 2, player.col.pos.y - oiram_height / 2);
