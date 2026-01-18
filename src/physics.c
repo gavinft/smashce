@@ -6,6 +6,10 @@
 collider_t* phy_colliders[PHY_COLLIDERS_LEN] = {0};
 rb_t* phy_rbs[PHY_RBS_LEN] = {0};
 
+/**
+ * Returns the point of collision along an axis.
+ * Will be negative if collision has already happened
+ */
 static inline float colpoint(float beg, float end, float wall) {
     if (end > beg) {
         return (wall - beg) / (end - beg);
@@ -59,14 +63,15 @@ void phy_step(float dt) {
     for (int i = 0; i < PHY_RBS_LEN; i++) { // TODO: optimize loop (short circuit entire loop)
         if (!phy_rbs[i])
             continue;
-        rb_t* rb = phy_rbs[i];
-        const collider_t current = rb->col;
+        rb_t* rb = phy_rbs[i]; /* current rb */
+        const collider_t current = rb->col; /* this is for comparing against */
         collider_t predict = current; /* copy current collider */
         
         rb->vel.y += PHY_GRAVITY * dt;
         predict.pos.x += rb->vel.x; /* predict based off velocity */
         predict.pos.y += rb->vel.y;
 
+        // loop through colliders and resolve prediction based off them
         for (int i = 0; i < PHY_COLLIDERS_LEN; i++) {
             if (!phy_colliders[i])
                 continue;
@@ -120,7 +125,7 @@ void phy_step(float dt) {
             }
         }
 
-        /* Update position to predicted and fixed position */
+        /* Update rb's position to predicted and resolved position */
         rb->col = predict;
     }
 
