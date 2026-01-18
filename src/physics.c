@@ -24,38 +24,37 @@ void phy_step(float dt) {
                 continue;
 
             collider_t* that = phy_colliders[i];
-            dbg_printf("collider: %d\n", i);
 
             if (that->layer & phy_layer_player)
                 continue;
-            dbg_printf("not player\n");
             if (!phy_col_overlap(*this, *that))
                 continue;
             dbg_printf("overlap!\n");
+            
             // Overlap handling
             bool overlap_bottom = phy_col_bot(*this) > phy_col_bot(*that);
             bool overlap_top = phy_col_top(*this) < phy_col_top(*that);
-            bool overlap_left = phy_col_left(*this) > phy_col_left(*that);
-            bool overlap_right = phy_col_right(*this) < phy_col_right(*that);
+            bool overlap_left = phy_col_left(*this) < phy_col_left(*that);
+            bool overlap_right = phy_col_right(*this) > phy_col_right(*that);
             if (overlap_left != overlap_right) {
                 if (overlap_left) {
                     dbg_printf("overlap left\n");
                     if (rb->vel.x <= 0)
                         rb->vel.x = 0;
-                    this->pos.x = phy_col_top(*that) + this->extent.x;
+                    this->pos.x = phy_col_left(*that) - this->extent.x;
                 }
                 else if (overlap_right) {
                     dbg_printf("overlap right\n");
                     if (rb->vel.x >= 0)
                         rb->vel.x = 0;
-                    this->pos.x = phy_col_top(*that) - this->extent.x;
+                    this->pos.x = phy_col_right(*that) + this->extent.x;
                 }
             } else { // if overlap_top != overlap_bottom, but we want to fallback
                 if (overlap_bottom) {
                     dbg_printf("overlap bottom\n");
-                    if (rb->vel.y <= 0)
+                    if (rb->vel.y >= 0)
                         rb->vel.y = 0;
-                    this->pos.y = phy_col_top(*that) + this->extent.y;
+                    this->pos.y = phy_col_bot(*that) + this->extent.y;
                 }
                 else if (overlap_top) {
                     dbg_printf("overlap top\n");
