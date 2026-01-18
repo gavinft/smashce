@@ -2,12 +2,16 @@
 #include <time.h>
 #include <graphx.h>
 #include <keypadc.h>
+#include <debug.h>
 
 #include "physics.h"
 #include "gfx/gfx.h"
 
 clock_t last_time;
 #define FRAME_TIME CLOCKS_PER_SEC / 30.0
+
+collider_t stage_col = {.pos = {160, 190}, .extent = {130, 20}, .layer = phy_layer_stage};
+rb_t player = {.col = {.pos = {160, 30}, .extent = {16 / 2, 27.0f / 2}, .layer = phy_layer_player}};
 
 static void begin();
 static void end();
@@ -36,7 +40,9 @@ int main(void)
 }
 
 static void begin() {
-    
+    phy_rbs[0] = &player;
+    phy_colliders[0] = &stage_col;
+    phy_colliders[1] = &player.col;
 }
 
 static void end() {
@@ -49,16 +55,17 @@ static bool step() {
 
     phy_step(1.0 / 30.0);
 
-    return !kb_IsDown(kb_KeyEnter);
+    return !kb_IsDown(kb_KeyClear);
 }
 
 void draw() {
     /* Initialize graphics drawing */
     gfx_FillScreen(1);
 
-    /* Draw a normal sprite */
-    gfx_Sprite_NoClip(oiram, 130, 110);
+    gfx_SetColor(0);
+    gfx_Rectangle(phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
+    dbg_printf("phy_col_left: %f\nphy_col_top: %f\nextent x: %f\nextent y: %f\n\n", phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
 
     /* A transparent sprite allows the background to show */
-    gfx_TransparentSprite_NoClip(oiram, 190, 110);
+    gfx_TransparentSprite(oiram, player.col.pos.x + oiram_width / 2, player.col.pos.y - oiram_height / 2);
 }
