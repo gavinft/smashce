@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "vec.h"
 
-#define PHY_GRAVITY 1
+#define PHY_GRAVITY 10
 
 typedef struct {
     vec2_t pos; /* center of collider */
@@ -22,7 +22,7 @@ typedef struct {
 #define phy_col_overlap(col1, col2) (phy_col_bot(col1) > phy_col_top(col2) && \
                                      phy_col_top(col1) < phy_col_bot(col2) && \
                                      phy_col_left(col1) < phy_col_right(col2) && \
-                                     phy_col_right(col1) < phy_col_left(col2))
+                                     phy_col_right(col1) > phy_col_left(col2))
 
 #define PHY_COLLIDERS_LEN (4)
 extern collider_t* phy_colliders[PHY_COLLIDERS_LEN];
