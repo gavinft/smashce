@@ -3,6 +3,8 @@ palettes:
     fixed-entries:
       - color: {index: 0, r: 255, g: 0, b: 128}
       - color: {index: 1, r: 255, g: 255, b: 255}
+      - color: {index: 2, r: 0, g: 0, b: 0}
+      - color: {index: 3, r: 10, g: 200, b: 50}
     images: automatic
 
 converts:
