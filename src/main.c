@@ -53,6 +53,13 @@ static bool step() {
     last_time = clock();
     kb_Scan();
 
+    player.vel.x = 0;
+    if (kb_IsDown(kb_KeyLeft))
+        player.vel.x -= 5;
+    if (kb_IsDown(kb_KeyRight))
+        player.vel.x += 5;
+    if (player.vel.y == 0 && kb_IsDown(kb_KeyUp))
+        player.vel.y = -5;
     phy_step(1.0 / 30.0);
 
     return !kb_IsDown(kb_KeyClear);
