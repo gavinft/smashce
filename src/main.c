@@ -12,7 +12,7 @@ clock_t last_time;
 
 collider_t stage_col = {.pos = {160, 190}, .extent = {130, 20}, .layer = phy_layer_stage};
 collider_t box_col = {.pos = {160, 110}, .extent = {20, 20}, .layer = phy_layer_stage};
-rb_t player = {.col = {.pos = {160, 30}, .extent = {16 / 2, 27.0f / 2}, .layer = phy_layer_player}};
+rb_t player;
 
 static void begin();
 static void end();
@@ -40,7 +40,12 @@ int main(void)
     return 0;
 }
 
+static void reset_oiram() {
+    player = (rb_t) {.col = {.pos = {160, 30}, .extent = {16 / 2, 27.0f / 2}, .layer = phy_layer_player}};
+}
+
 static void begin() {
+    reset_oiram();
     phy_rbs[0] = &player;
     phy_colliders[0] = &stage_col;
     phy_colliders[1] = &player.col;
@@ -64,6 +69,13 @@ static bool step() {
         player.vel.y = -5;
     phy_step(1.0 / 30.0);
 
+    if (player.col.pos.y > 280)
+        reset_oiram();
+
+    // dbg_printf("player:\n\tx = %f\n\ty = %f\n", player.col.pos.x, player.col.pos.y);
+    // dbg_printf("stage: lt (%.1f, %.1f) rb (%.1f, %.1f)\n", phy_col_left(stage_col), phy_col_top(stage_col), phy_col_right(stage_col), phy_col_bot(stage_col));
+    // dbg_printf("box: kt (%.1f, %.1f) rb (%.1f, %.1f)\n", phy_col_left(box_col), phy_col_top(box_col), phy_col_right(box_col), phy_col_bot(box_col));
+
     return !kb_IsDown(kb_KeyClear);
 }
 
@@ -73,9 +85,9 @@ void draw() {
 
     gfx_SetColor(3);
     gfx_Rectangle(phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
-    dbg_printf("phy_col_left: %f\nphy_col_top: %f\nextent x: %f\nextent y: %f\n\n", phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
+    // dbg_printf("phy_col_left: %f\nphy_col_top: %f\nextent x: %f\nextent y: %f\n\n", phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
     gfx_Rectangle(phy_col_left(box_col), phy_col_top(box_col), box_col.extent.x * 2, box_col.extent.y * 2);
 
     /* A transparent sprite allows the background to show */
-    gfx_TransparentSprite(oiram, player.col.pos.x + oiram_width / 2, player.col.pos.y - oiram_height / 2);
+    gfx_TransparentSprite(oiram, player.col.pos.x - oiram_width / 2.0f, player.col.pos.y - oiram_height / 2.0f);
 }
