@@ -10,15 +10,18 @@ void phy_step(float dt) {
         if (!phy_rbs[i])
             continue;
         rb_t* rb = phy_rbs + i;
+        collider_t* this = &rb->col;
         
-        rb->vel.y += PHY_GRAVITY;
+        rb->vel.y += PHY_GRAVITY * dt;
+        this->pos.x += rb->vel.x;
+        this->pos.y += rb->vel.y;
+
         for (int i = 0; i < PHY_COLLIDERS_LEN; i++) {
             if (!phy_colliders[i])
                 continue;
             if (phy_colliders[i] == &rb->col)
                 continue;
-            
-            collider_t* this = &rb->col;
+
             collider_t* that = phy_colliders + i;
 
             if (that->layer & phy_layer_player)
