@@ -12,5 +12,7 @@ typedef struct {
     bool special;
 } input_t;
 
+void input_scan_xbc(xbc_controller_t* controller, input_t* input);
+void input_scan_kpad(input_t* input);
 
 #endif
