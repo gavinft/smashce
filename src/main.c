@@ -13,10 +13,6 @@
 clock_t last_time;
 #define FRAME_TIME CLOCKS_PER_SEC / 30.0
 
-#define MOVE_DEADZONE 0.01f
-
-#define MOVE_DEADZONE 0.01f
-
 collider_t stage_col = {.pos = {160, 190}, .extent = {130, 20}, .layer = phy_layer_stage, .friction = 1.3f};
 collider_t box_col = {.pos = {160, 110}, .extent = {20, 20}, .layer = phy_layer_stage};
 rb_t player;
@@ -105,14 +101,12 @@ static bool step() {
                 break;
         }
 
-        if (fabsf(input->move.x) > MOVE_DEADZONE) {
-            if (input->move.x < 0) {
-                if (player.vel.x > -max_speed)
-                    player.vel.x += accel * input->move.x;
-            } else {
-                if (player.vel.x < max_speed)
-                    player.vel.x += accel * input->move.x;
-            }
+        if (input->move.x < 0) {
+            if (player.vel.x > -max_speed)
+                player.vel.x += accel * input->move.x;
+        } else {
+            if (player.vel.x < max_speed)
+                player.vel.x += accel * input->move.x;
         }
 
         if (input->jump && player.grounded)

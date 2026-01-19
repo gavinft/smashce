@@ -1,16 +1,20 @@
 #include <keypadc.h>
 #include <stdint.h>
+#include <math.h>
 #include "input.h"
 #include "controller.h"
 
 #define XBC_STICK_INPUT_SCALE (1.0f / 32767) // idk
 #define UINT_24_MAX 16777215
+#define MOVE_DEADZONE (0.01f * 32767)
 
 void input_scan_xbc(xbc_controller_t* controller, input_t* input) {
     xbc_Scan(controller);
 
-    input->move.x = controller->control_data.lx * XBC_STICK_INPUT_SCALE;
-    input->move.y = controller->control_data.ly * XBC_STICK_INPUT_SCALE;
+    if (fabsf(controller->control_data.lx) <= MOVE_DEADZONE)
+        input->move.x = controller->control_data.lx * XBC_STICK_INPUT_SCALE;
+    if (fabsf(controller->control_data.ly) <= MOVE_DEADZONE)
+        input->move.y = controller->control_data.ly * XBC_STICK_INPUT_SCALE;
 
     uint16_t buttons = controller->control_data.digital_buttons;
 
@@ -31,9 +35,9 @@ void input_scan_kpad(input_t* input) {
     input->move.x = 0;
     float mod = kb_Data[6] & kb_Clear ? 0.5f : 1.0f;
     if (kb_Data[7] & kb_Left)
-        input->move.x -= 1.0f * mod;
+        input->move.x -= mod;
     if (kb_Data[7] & kb_Right)
-        input->move.x += +1.0f * mod;
+        input->move.x += mod;
     
     input->jump = kb_Data[2] & kb_Alpha;
     input->attack = kb_Data[1] & kb_2nd;
