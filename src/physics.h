@@ -2,6 +2,7 @@
 #define PHYSICS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "vec.h"
 
 #define PHY_GRAVITY 900

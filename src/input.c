@@ -12,9 +12,9 @@
 void input_scan_xbc(xbc_controller_t* controller, input_t* input) {
     xbc_Scan(controller);
 
-    if (fabsf(controller->control_data.lx) <= MOVE_DEADZONE)
+    if (abs(controller->control_data.lx) <= MOVE_DEADZONE)
         input->move.x = controller->control_data.lx * XBC_STICK_INPUT_SCALE;
-    if (fabsf(controller->control_data.ly) <= MOVE_DEADZONE)
+    if (abs(controller->control_data.ly) <= MOVE_DEADZONE)
         input->move.y = controller->control_data.ly * XBC_STICK_INPUT_SCALE;
 
     uint16_t buttons = controller->control_data.digital_buttons;
@@ -107,7 +107,7 @@ usb_error_t usb_event_handler(usb_event_t event, void* event_data, void* user_da
             }
 
             state->num_connected_controllers--;
-            for (uint24_t i = id; i < state->num_connected_controllers; i++) {
+            for (uint24_t i = id; i < (uint24_t) state->num_connected_controllers; i++) {
                 state->controllers[i] = state->controllers[i + 1];
 
                 if (state->controllers[i].type == CONTROLLER_XBOX) {
