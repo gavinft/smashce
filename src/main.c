@@ -54,7 +54,8 @@ static void reset_oiram() {
 
 static void begin() {
     usb_Init(usb_event_handler, &controller_state, NULL, USB_DEFAULT_INIT_FLAGS);
-
+    controller_state.controllers[0].type = CONTROLLER_KEYPAD;
+    controller_state.num_connected_controllers = 1;
 
     reset_oiram();
     phy_rbs[0] = &player;
