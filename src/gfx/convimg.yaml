@@ -13,6 +13,7 @@ converts:
     transparent-color-index: 0
     images:
       - oiram.png
+      - mario.png
 
 outputs:
   - type: c

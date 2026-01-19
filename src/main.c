@@ -15,7 +15,9 @@ clock_t last_time;
 
 #define MOVE_DEADZONE 0.01f
 
-collider_t stage_col = {.pos = {160, 190}, .extent = {130, 20}, .layer = phy_layer_stage};
+#define MOVE_DEADZONE 0.01f
+
+collider_t stage_col = {.pos = {160, 190}, .extent = {130, 20}, .layer = phy_layer_stage, .friction = 1.3f};
 collider_t box_col = {.pos = {160, 110}, .extent = {20, 20}, .layer = phy_layer_stage};
 rb_t player;
 
@@ -49,18 +51,18 @@ int main(void)
 }
 
 static void reset_oiram() {
-    player = (rb_t) {.col = {.pos = {160, 30}, .extent = {16 / 2, 27.0f / 2}, .layer = phy_layer_player}};
+    player = (rb_t) {.col = {.pos = {160, 30}, .extent = {16 / 2, 27.0f / 2}, .layer = phy_layer_player, .friction = 1.0f}, .resistance = 0.1f, .max_fall = 400};
 }
 
 static void begin() {
     usb_Init(usb_event_handler, &controller_state, NULL, USB_DEFAULT_INIT_FLAGS);
-
+    controller_state.controllers[0].type = CONTROLLER_KEYPAD;
+    controller_state.num_connected_controllers = 1;
 
     reset_oiram();
     phy_rbs[0] = &player;
-    phy_colliders[0] = &stage_col;
-    phy_colliders[1] = &player.col;
-    phy_colliders[2] = &box_col;
+    phy_stage_colliders[0] = &stage_col;
+    phy_stage_colliders[2] = &box_col;
 }
 
 static void end() {
@@ -80,10 +82,18 @@ static bool step() {
         err = e;
     }
 
-    player.vel.x = 0;
+    float accel;
+    const float max_speed = 175;
+    
+    if (player.grounded) {
+        accel = 2500 / 30.0;
+        dbg_printf("grounded\n");
+    } else {
+        accel = 800 / 30.0;
+        dbg_printf("not grounded\n");
+    }
 
     for (int i = 0; i < controller_state.num_connected_controllers; i++) {
-
         input_t* input = &controller_state.controllers[i].input;
 
         switch (controller_state.controllers[i].type) {
@@ -96,12 +106,18 @@ static bool step() {
                 break;
         }
 
-        if (fabsf(input->move.x) > MOVE_DEADZONE)
-            player.vel.x = input->move.x;
+        if (fabsf(input->move.x) > MOVE_DEADZONE) {
+            if (input->move.x < 0) {
+                if (player.vel.x > -max_speed)
+                    player.vel.x += accel * input->move.x;
+            } else {
+                if (player.vel.x < max_speed)
+                    player.vel.x += accel * input->move.x;
+            }
+        }
 
-        if (input->jump && player.vel.y == 0)
-            player.vel.y = -10;
-
+        if (input->jump && player.grounded)
+            player.vel.y = -400;
     }
 
     phy_step(1.0 / 30.0);
@@ -134,4 +150,13 @@ void draw() {
 
     /* A transparent sprite allows the background to show */
     gfx_TransparentSprite(oiram, player.col.pos.x - oiram_width / 2.0f, player.col.pos.y - oiram_height / 2.0f);
+
+    gfx_SetTextXY(5, 5);
+    gfx_SetTextBGColor(3);
+    gfx_SetTextFGColor(2);
+    gfx_PrintString("vel: (");
+    gfx_PrintInt(player.vel.x, 1);
+    gfx_PrintString(", ");
+    gfx_PrintInt(player.vel.y, 1);
+    gfx_PrintString(")");
 }
