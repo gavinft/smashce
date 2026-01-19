@@ -61,9 +61,8 @@ static void begin() {
 
     reset_oiram();
     phy_rbs[0] = &player;
-    phy_colliders[0] = &stage_col;
-    phy_colliders[1] = &player.col;
-    phy_colliders[2] = &box_col;
+    phy_stage_colliders[0] = &stage_col;
+    phy_stage_colliders[2] = &box_col;
 }
 
 static void end() {
