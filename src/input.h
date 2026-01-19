@@ -16,9 +16,27 @@ typedef struct {
 
 #define MAX_CONTROLLERS 4
 
+typedef enum {
+    CONTROLLER_XBOX,
+    CONTROLLER_KEYPAD,
+} controller_type_t;
+
 typedef struct {
-    xbc_controller_t controllers[4];
+
+    controller_type_t type;
+    input_t input;
+    union {
+        xbc_controller_t xbc;
+    } controller;
+
+} controller_t;
+
+
+typedef struct {
+    
+    controller_t controllers[4];
     int num_connected_controllers;
+
 } controller_state_t;
 
 void input_scan_xbc(xbc_controller_t* controller, input_t* input);

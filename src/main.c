@@ -3,6 +3,7 @@
 #include <graphx.h>
 #include <keypadc.h>
 #include <debug.h>
+#include <math.h>
 
 #include "physics.h"
 #include "input.h"
@@ -11,6 +12,8 @@
 
 clock_t last_time;
 #define FRAME_TIME CLOCKS_PER_SEC / 30.0
+
+#define MOVE_DEADZONE 0.01f
 
 collider_t stage_col = {.pos = {160, 190}, .extent = {130, 20}, .layer = phy_layer_stage};
 collider_t box_col = {.pos = {160, 110}, .extent = {20, 20}, .layer = phy_layer_stage};
@@ -63,18 +66,43 @@ static void begin() {
 static void end() {
     usb_Cleanup();
 }
-
+usb_error_t err;
 static bool step() {
     last_time = clock();
+
+    // remove maybe?
     kb_Scan();
 
+    
+    usb_error_t e = usb_HandleEvents();
+    if (e != USB_SUCCESS) {
+        err = e;
+    }
+
     player.vel.x = 0;
-    if (kb_IsDown(kb_KeyLeft))
-        player.vel.x -= 5;
-    if (kb_IsDown(kb_KeyRight))
-        player.vel.x += 5;
-    if (player.vel.y == 0 && kb_IsDown(kb_KeyUp))
-        player.vel.y = -5;
+
+    for (int i = 0; i < controller_state.num_connected_controllers; i++) {
+
+        input_t* input = &controller_state.controllers[i].input;
+
+        switch (controller_state.controllers[i].type) {
+            case CONTROLLER_XBOX:
+                input_scan_xbc(&controller_state.controllers[i].controller.xbc, input);
+                break;
+
+            case CONTROLLER_KEYPAD:
+                input_scan_kpad(input);
+                break;
+        }
+
+        if (fabsf(input->move.x) > MOVE_DEADZONE)
+            player.vel.x = input->move.x;
+
+        if (input->jump && player.vel.y == 0)
+            player.vel.y = -10;
+
+    }
+
     phy_step(1.0 / 30.0);
 
     if (player.col.pos.y > 280)
@@ -90,8 +118,15 @@ static bool step() {
 void draw() {
     /* Initialize graphics drawing */
     gfx_FillScreen(2);
-
     gfx_SetColor(3);
+
+    if (err != USB_SUCCESS) {
+        gfx_SetTextXY(10, 10);
+        gfx_PrintString("failed ");
+        gfx_PrintInt(err, 1);
+    }
+
+   
     gfx_Rectangle(phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
     // dbg_printf("phy_col_left: %f\nphy_col_top: %f\nextent x: %f\nextent y: %f\n\n", phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
     gfx_Rectangle(phy_col_left(box_col), phy_col_top(box_col), box_col.extent.x * 2, box_col.extent.y * 2);
