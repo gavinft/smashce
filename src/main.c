@@ -5,6 +5,8 @@
 #include <debug.h>
 
 #include "physics.h"
+#include "input.h"
+#include "controller.h"
 #include "gfx/gfx.h"
 
 clock_t last_time;
@@ -13,6 +15,9 @@ clock_t last_time;
 collider_t stage_col = {.pos = {160, 190}, .extent = {130, 20}, .layer = phy_layer_stage};
 collider_t box_col = {.pos = {160, 110}, .extent = {20, 20}, .layer = phy_layer_stage};
 rb_t player;
+
+
+controller_state_t controller_state;
 
 static void begin();
 static void end();
@@ -45,6 +50,9 @@ static void reset_oiram() {
 }
 
 static void begin() {
+    usb_Init(usb_event_handler, &controller_state, NULL, USB_DEFAULT_INIT_FLAGS);
+
+
     reset_oiram();
     phy_rbs[0] = &player;
     phy_colliders[0] = &stage_col;
@@ -53,7 +61,7 @@ static void begin() {
 }
 
 static void end() {
-    
+    usb_Cleanup();
 }
 
 static bool step() {

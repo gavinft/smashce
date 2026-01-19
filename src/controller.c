@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+
 void xbc_Init(xbc_controller_t* controller, usb_device_t device) {
+    
     size_t descriptor_length = usb_GetConfigurationDescriptorTotalLength(device, 0);
 
     usb_configuration_descriptor_t* conf_descriptor = malloc(descriptor_length); // could statically allocate 153 bytes
@@ -13,8 +16,11 @@ void xbc_Init(xbc_controller_t* controller, usb_device_t device) {
     free(conf_descriptor);
 
     controller->control_endpoint = usb_GetDeviceEndpoint(device, 0x81);
+
     controller->rumble_led_endpoint = usb_GetDeviceEndpoint(device, 0x01);
 
+    if (controller->rumble_led_endpoint == NULL) // knockoff controller uses endpoint 2 instead, no easy way of differentiating the controllers other than this
+        controller->rumble_led_endpoint = usb_GetDeviceEndpoint(device, 0x02);
 }
 
 
