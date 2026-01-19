@@ -48,8 +48,12 @@ void player_set_charac(player_t *player, player_char_t charac) {
 
 void player_update(player_t *player, input_t *input, float dt) {
     float accel;
-    float max_speed = player->max_speed;
+    float max_speed;
 
+    if (!input)
+        return;
+
+    max_speed = player->max_speed;
     if (player->rb.grounded) {
         accel = player->ground_accel * dt;
         dbg_printf("grounded\n");
