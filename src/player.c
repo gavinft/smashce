@@ -1,4 +1,5 @@
 #include <graphx.h>
+#include <debug.h>
 #include "player.h"
 #include "gfx/gfx.h"
 
