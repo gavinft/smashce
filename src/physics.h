@@ -10,7 +10,14 @@ typedef struct {
     vec2_t pos; /* center of collider */
     vec2_t extent; /* x-width and y-height */
     uint8_t layer;
+    float friction;
 } collider_t;
+
+typedef struct {
+    collider_t col;
+    vec2_t vel;
+    float mass;
+} rb_t;
 
 #define phy_layer_player (1 << 0)
 #define phy_layer_stage (1 << 1)
@@ -26,11 +33,6 @@ typedef struct {
 
 #define PHY_COLLIDERS_LEN (4)
 extern collider_t* phy_colliders[PHY_COLLIDERS_LEN];
-
-typedef struct {
-    collider_t col;
-    vec2_t vel;
-} rb_t;
 
 #define PHY_RBS_LEN (4)
 extern rb_t* phy_rbs[PHY_RBS_LEN];

@@ -33,6 +33,10 @@ void input_scan_kpad(input_t* input) {
         input->move.x -= 1.0f * mod;
     if (kb_Data[7] & kb_Right)
         input->move.x += 1.0f * mod;
+    
+    input->jump = kb_Data[2] & kb_Alpha;
+    input->attack = kb_Data[1] & kb_2nd;
+    input->special = kb_Data[1] & kb_Mode;
 }
 
 usb_error_t usb_event_handler(usb_event_t event, void* event_data, void* user_data) {
