@@ -50,8 +50,8 @@ int main(void)
 
 static void begin() {
     usb_Init(usb_event_handler, &controller_state, NULL, USB_DEFAULT_INIT_FLAGS);
-    controller_state.controllers[0].type = CONTROLLER_KEYPAD;
-    controller_state.num_connected_controllers = 1;
+    // controller_state.controllers[0].type = CONTROLLER_KEYPAD;
+    // controller_state.num_connected_controllers = 1;
 
     player_set_charac(&players[0], PLAYER_OIRAM);
     player_set_charac(&players[1], PLAYER_MARIO);
@@ -72,11 +72,7 @@ static bool step() {
     // remove maybe?
     kb_Scan();
 
-    
-    usb_error_t e = usb_HandleEvents();
-    if (e != USB_SUCCESS) {
-        err = e;
-    }
+    usb_HandleEvents();
 
     for (int i = 0; i < controller_state.num_connected_controllers; i++) {
         input_t* input = &controller_state.controllers[i].input;
@@ -103,12 +99,6 @@ void draw() {
     /* Initialize graphics drawing */
     gfx_FillScreen(2);
     gfx_SetColor(3);
-
-    if (err != USB_SUCCESS) {
-        gfx_SetTextXY(10, 10);
-        gfx_PrintString("failed ");
-        gfx_PrintInt(err, 1);
-    }
 
    
     gfx_Rectangle(phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
