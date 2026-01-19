@@ -1,6 +1,7 @@
 #include <debug.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 #include "physics.h"
 
 collider_t* phy_colliders[PHY_COLLIDERS_LEN] = {0};
@@ -51,7 +52,8 @@ static void fix_vel_y(rb_t *rb, bool overlap_top, bool overlap_bottom) {
     if (overlap_top) {
         if (rb->vel.y >= 0) {
             rb->vel.y = 0;
-    }
+            rb->grounded = true;
+        }
     } else if (overlap_bottom) {
         if (rb->vel.y <= 0) {
             rb->vel.y = 0;
@@ -67,9 +69,15 @@ void phy_step(float dt) {
         const collider_t current = rb->col; /* this is for comparing against */
         collider_t predict = current; /* copy current collider */
         
-        rb->vel.y += PHY_GRAVITY * dt;
-        predict.pos.x += rb->vel.x; /* predict based off velocity */
-        predict.pos.y += rb->vel.y;
+        // gravity
+        if (rb->vel.y < rb->max_fall)
+            rb->vel.y += PHY_GRAVITY * dt;
+        // air resistance
+        rb->vel.x += -1 * rb->resistance * rb->vel.x;
+        // rb->vel.y += -1 * rb->floatness * rb->vel.y;
+
+        predict.pos.x += rb->vel.x * dt; /* predict based off velocity */
+        predict.pos.y += rb->vel.y * dt;
 
         // loop through colliders and resolve prediction based off them
         for (int i = 0; i < PHY_COLLIDERS_LEN; i++) {
@@ -122,11 +130,22 @@ void phy_step(float dt) {
             } else { // yt >= xt
                 fix_pos_y(&predict, that, overlap_top, overlap_bottom);
                 fix_vel_y(rb, overlap_top, overlap_bottom);
+                
+                // apply friction
+                float friction = fminf(PHY_GRAVITY * that->friction * predict.friction * dt, fabsf(rb->vel.x));
+                if (rb->vel.x > 0) {
+                    rb->vel.x -= friction;
+                } else {
+                    rb->vel.x += friction;
+                }
             }
         }
 
         /* Update rb's position to predicted and resolved position */
         rb->col = predict;
+        // check if grounded
+        if (0.001f - fabsf(rb->vel.y) < 0)
+            rb->grounded = false;
     }
 
     dbg_printf("\n");

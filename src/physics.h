@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "vec.h"
 
-#define PHY_GRAVITY 10
+#define PHY_GRAVITY 900
 
 typedef struct {
     vec2_t pos; /* center of collider */
@@ -16,7 +16,9 @@ typedef struct {
 typedef struct {
     collider_t col;
     vec2_t vel;
-    float mass;
+    float resistance;
+    float max_fall;
+    bool grounded;
 } rb_t;
 
 #define phy_layer_player (1 << 0)
