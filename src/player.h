@@ -19,6 +19,10 @@ typedef struct {
     rb_t rb;
     player_char_t charac;
     player_state_t state;
+    float max_speed;
+    float ground_accel;
+    float air_accel;
+    float jump_vel;
     int jumps;
 } player_t;
 
