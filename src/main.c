@@ -64,6 +64,7 @@ static void begin() {
 static void end() {
     usb_Cleanup();
 }
+
 usb_error_t err;
 static bool step() {
     last_time = clock();

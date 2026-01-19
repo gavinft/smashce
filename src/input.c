@@ -1,5 +1,6 @@
 #include <keypadc.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <math.h>
 #include "input.h"
 #include "controller.h"
@@ -59,8 +60,6 @@ usb_error_t usb_event_handler(usb_event_t event, void* event_data, void* user_da
 
             usb_ResetDevice(event_data);
 
-            return 50;
-
             break;
 
         case USB_DEVICE_ENABLED_EVENT:
@@ -69,9 +68,15 @@ usb_error_t usb_event_handler(usb_event_t event, void* event_data, void* user_da
             flags = usb_GetDeviceFlags(event_data);
 
             if (flags & USB_IS_HUB) { // not sure if hubs have to be reset
+
+                size_t length = usb_GetConfigurationDescriptorTotalLength(event_data, 0);
+                usb_configuration_descriptor_t* conf_descriptor = malloc(length);
+                usb_GetConfigurationDescriptor(event_data, 0, conf_descriptor, length, NULL);
+                usb_SetConfiguration(event_data, conf_descriptor, length);
+                free(conf_descriptor);
+
                 usb_SetDeviceData(event_data, (void*)(uint24_t)UINT_24_MAX);
-                return 51;
-                // break;
+                break;
             }
 
             // controller setup
@@ -87,15 +92,16 @@ usb_error_t usb_event_handler(usb_event_t event, void* event_data, void* user_da
             xbc_Init(controller, event_data);
             xbc_SetLED(controller, state->num_connected_controllers + 1);
 
-            return 52;
+
             break;
 
         case USB_DEVICE_DISCONNECTED_EVENT:
-        case USB_DEVICE_DISABLED_EVENT:
+        // case USB_DEVICE_DISABLED_EVENT:
 
             id = (uint24_t)usb_GetDeviceData(event_data);
 
             if (id == UINT_24_MAX) { // hub
+                // calc crashes when this is reached
                 // should the controllers list be cleared?
                 break;
             }
@@ -113,7 +119,6 @@ usb_error_t usb_event_handler(usb_event_t event, void* event_data, void* user_da
             break;
 
         default:
-            return event;
             break;
     }
 
