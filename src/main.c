@@ -75,11 +75,12 @@ static bool step() {
     usb_HandleEvents();
 
     for (int i = 0; i < controller_state.num_connected_controllers; i++) {
-        input_t* input = &controller_state.controllers[i].input;
+        controller_t* controller = &controller_state.controllers[i];
+        input_t* input = &controller->input;
 
         switch (controller_state.controllers[i].type) {
             case CONTROLLER_XBOX:
-                input_scan_xbc(&controller_state.controllers[i].controller.xbc, input);
+                input_scan_xbc(&controller->controller.xbc, input);
                 break;
 
             case CONTROLLER_KEYPAD:
@@ -87,7 +88,9 @@ static bool step() {
                 break;
         }
 
-        player_update(&players[i], input, 1.0f / 30.0f);
+        player_update(&players[i], input, &controller->last_input, 1.0f / 30.0f);
+
+        controller->last_input = controller->input;
     }
 
     phy_step(1.0f / 30.0f);

@@ -46,7 +46,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
     }
 }
 
-void player_update(player_t *player, input_t *input, float dt) {
+void player_update(player_t *player, input_t *input, input_t* last_input, float dt) {
     float accel;
     float max_speed;
 
@@ -70,7 +70,7 @@ void player_update(player_t *player, input_t *input, float dt) {
             player->rb.vel.x += accel * input->move.x;
     }
 
-    if (input->jump && player->rb.grounded)
+    if (input->jump && !last_input->jump && player->rb.grounded )
         player->rb.vel.y = player->jump_vel;
     
     if (player->rb.col.pos.y > 280)
