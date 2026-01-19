@@ -12,9 +12,9 @@
 void input_scan_xbc(xbc_controller_t* controller, input_t* input) {
     xbc_Scan(controller);
 
-    if (abs(controller->control_data.lx) <= MOVE_DEADZONE)
+    if (abs(controller->control_data.lx) >= MOVE_DEADZONE)
         input->move.x = controller->control_data.lx * XBC_STICK_INPUT_SCALE;
-    if (abs(controller->control_data.ly) <= MOVE_DEADZONE)
+    if (abs(controller->control_data.ly) >= MOVE_DEADZONE)
         input->move.y = controller->control_data.ly * XBC_STICK_INPUT_SCALE;
 
     uint16_t buttons = controller->control_data.digital_buttons;
