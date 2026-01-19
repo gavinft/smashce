@@ -91,10 +91,10 @@ static bool step() {
                 break;
         }
 
-        player_update(&players[i], input);
+        player_update(&players[i], input, 1.0f / 30.0f);
     }
 
-    phy_step(1.0 / 30.0);
+    phy_step(1.0f / 30.0f);
 
     return !kb_IsDown(kb_KeyClear);
 }
