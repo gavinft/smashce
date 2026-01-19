@@ -90,11 +90,10 @@ static bool step() {
                 input_scan_kpad(input);
                 break;
         }
+
+        player_update(&players[i], input);
     }
 
-    for (int i = 0; i < MAX_PLAYERS; i++) {
-        player_update(&players[i], input idk);
-    }
     phy_step(1.0 / 30.0);
 
     return !kb_IsDown(kb_KeyClear);
