@@ -109,7 +109,7 @@ static void hurtbox(player_t *player, collider_t* box, vec2_t* kb, float dt, pla
     }
 }
 
-static void oiram_au(player_t *player, input_t *input, float dt, player_t* hitboxes, size_t hitboxes_len) {
+static void oiram_au(player_t *player, input_t *input, input_t *last_input, float dt, player_t* hitboxes, size_t hitboxes_len) {
     typedef enum {
         ANIM_DEFAULT,
         ANIM_JAB,
@@ -124,7 +124,7 @@ static void oiram_au(player_t *player, input_t *input, float dt, player_t* hitbo
 
     switch (player->animation) {
         case ANIM_DEFAULT:
-            if (input->attack) {
+            if (input->attack && !last_input->attack) {
                 player->animation = ANIM_JAB;
                 player->state = PLAYER_STATE_LOCKOUT;
                 player->lockout_frames = 10;
@@ -156,7 +156,7 @@ static void oiram_au(player_t *player, input_t *input, float dt, player_t* hitbo
 }
 
 void player_attackupdate(player_t *player, input_t *input, input_t* last_input, float dt, player_t* hitboxes, size_t hitboxes_len) {
-    oiram_au(player, input, dt, hitboxes, hitboxes_len);
+    oiram_au(player, input, last_input, dt, hitboxes, hitboxes_len);
 }
 
 void player_draw(player_t *player) {
