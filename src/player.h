@@ -15,10 +15,16 @@ typedef enum {
     PLAYER_STATE_FREEFALL,
 } player_state_t;
 
+typedef enum {
+    PLAYER_DIR_RIGHT = 1,
+    PLAYER_DIR_LEFT = -1,
+} player_direction_t;
+
 typedef struct {
     rb_t rb;
     player_char_t charac;
     player_state_t state;
+    player_direction_t dir;
     float max_speed;
     float ground_accel;
     float air_accel;
@@ -34,6 +40,9 @@ typedef struct {
     player_t* attached;
 } hitbox_t;
 
+#define player_spr(name, dir) ((dir) > 0 ? name ## _r : name ## _l)
+
+void player_load_sprites();
 void player_set_charac(player_t *player, player_char_t charac);
 void player_update(player_t *player, input_t *input, input_t* last_input, float dt);
 void player_lateupdate(player_t *player, input_t *input, input_t* last_input, float dt);

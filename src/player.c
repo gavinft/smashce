@@ -10,6 +10,8 @@ collider_t hurtboxes[HURTBOXES_MAX];
 size_t hurtboxes_len;
 #endif /* NDEBUG */
 
+#define TURN_DEADZONE (0.1f)
+
 // reversed characters
 // - eventually ill make some tool that auto makes these + other things
 gfx_UninitedSprite(oiram_neu_l, oiram_neu_r_width, oiram_neu_r_height);
@@ -35,6 +37,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                     .max_fall = 400
                 },
                 .charac = PLAYER_OIRAM,
+                .dir = PLAYER_DIR_RIGHT,
                 .max_speed = 175,
                 .ground_accel = 2500,
                 .air_accel = 800,
@@ -54,6 +57,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                     .max_fall = 400
                 },
                 .charac = PLAYER_MARIO,
+                .dir = PLAYER_DIR_RIGHT,
                 .max_speed = 175,
                 .ground_accel = 2500,
                 .air_accel = 800,
@@ -120,10 +124,10 @@ static void hurtbox(player_t *player, collider_t* box, vec2_t* kb, float dt, pla
 }
 
 static void oiram_au(player_t *player, input_t *input, input_t *last_input, float dt, player_t* hitboxes, size_t hitboxes_len) {
-    typedef enum {
+    enum {
         ANIM_DEFAULT,
         ANIM_JAB,
-    } oiram_anim_t;
+    };
 
     if (player->state == PLAYER_STATE_LOCKOUT) {
         if (player->lockout_frames <= 0)
@@ -139,6 +143,13 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
                 player->state = PLAYER_STATE_LOCKOUT;
                 player->lockout_frames = 10;
                 player->anim_frame = -1;
+                break;
+            }
+            if (player->rb.grounded) {
+                if (input->move.x < -TURN_DEADZONE)
+                    player->dir = PLAYER_DIR_LEFT;
+                else if (input->move.x > TURN_DEADZONE)
+                    player->dir = PLAYER_DIR_RIGHT;
             }
             break;
         case ANIM_JAB:
@@ -153,7 +164,7 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
                 case 5:
                 case 6:
                 case 7:
-                    hurtbox(player, &(collider_t){.pos = {player->rb.col.pos.x + 9, player->rb.col.pos.y}, .extent = {4, 4}}, &(vec2_t){10000, 300}, dt, hitboxes, hitboxes_len);
+                    hurtbox(player, &(collider_t){.pos = {player->rb.col.pos.x + 9 * player->dir, player->rb.col.pos.y}, .extent = {4, 4}}, &(vec2_t){player->dir * 5000, -1000}, dt, hitboxes, hitboxes_len);
                     break;
                 case 8:
                 case 9:
@@ -174,10 +185,10 @@ void player_draw(player_t *player) {
 
     switch (player->charac) {
         case PLAYER_OIRAM:
-            gfx_TransparentSprite(oiram_neu_r, rb->col.pos.x - oiram_neu_r_width / 2.0f, rb->col.pos.y - oiram_neu_r_height / 2.0f);
+            gfx_TransparentSprite(player_spr(oiram_neu, player->dir), rb->col.pos.x - oiram_neu_r_width / 2.0f, rb->col.pos.y - oiram_neu_r_height / 2.0f);
             break;
         case PLAYER_MARIO:
-            gfx_TransparentSprite(mario_neu_r, rb->col.pos.x - mario_neu_r_width / 2.0f, rb->col.pos.y - mario_neu_r_height / 2.0f);
+            gfx_TransparentSprite(player_spr(mario_neu, player->dir), rb->col.pos.x - mario_neu_r_width / 2.0f, rb->col.pos.y - mario_neu_r_height / 2.0f);
             break;
     }
 }
