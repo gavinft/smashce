@@ -16,8 +16,8 @@ gfx_UninitedSprite(oiram_neu_l, oiram_neu_r_width, oiram_neu_r_height);
 gfx_UninitedSprite(mario_neu_l, mario_neu_r_width, mario_neu_r_height);
 
 void player_load_sprites() {
-    gfx_FlipSpriteX(oiram_neu_r, oiram_neu_l);
-    gfx_FlipSpriteX(mario_neu_r, mario_neu_l);
+    gfx_FlipSpriteY(oiram_neu_r, oiram_neu_l);
+    gfx_FlipSpriteY(mario_neu_r, mario_neu_l);
 }
 
 void player_set_charac(player_t *player, player_char_t charac) {
