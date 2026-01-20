@@ -25,6 +25,7 @@ typedef struct {
 
     controller_type_t type;
     input_t input;
+    input_t last_input;
     union {
         xbc_controller_t xbc;
     } controller;

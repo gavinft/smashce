@@ -7,11 +7,12 @@
 
 #define XBC_STICK_INPUT_SCALE (1.0f / 32767) // idk
 #define UINT_24_MAX 16777215
-#define MOVE_DEADZONE (0.01f * 32767)
+#define MOVE_DEADZONE (0.25f * 32767)
 
 void input_scan_xbc(xbc_controller_t* controller, input_t* input) {
     xbc_Scan(controller);
 
+    input->move = (vec2_t) { 0 };
     if (abs(controller->control_data.lx) >= MOVE_DEADZONE)
         input->move.x = controller->control_data.lx * XBC_STICK_INPUT_SCALE;
     if (abs(controller->control_data.ly) >= MOVE_DEADZONE)

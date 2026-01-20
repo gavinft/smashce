@@ -35,9 +35,9 @@ typedef struct {
 } hitbox_t;
 
 void player_set_charac(player_t *player, player_char_t charac);
-void player_update(player_t *player, input_t *input, float dt);
-void player_lateupdate(player_t *player, input_t *input, float dt);
-void player_attackupdate(player_t *player, input_t *input, float dt, player_t* hitboxes, size_t hitboxes_len);
+void player_update(player_t *player, input_t *input, input_t* last_input, float dt);
+void player_lateupdate(player_t *player, input_t *input, input_t* last_input, float dt);
+void player_attackupdate(player_t *player, input_t *input, input_t* last_input, float dt, player_t* hitboxes, size_t hitboxes_len);
 void player_draw(player_t *player);
 
 #endif /* PLAYER_H */
