@@ -60,6 +60,8 @@ static void begin() {
     phy_rbs[1] = &players[1].rb;
     phy_stage_colliders[0] = &stage_col;
     phy_stage_colliders[1] = &box_col;
+
+    player_load_sprites();
 }
 
 static void end() {
