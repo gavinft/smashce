@@ -65,6 +65,10 @@ static void end() {
     usb_Cleanup();
 }
 
+static int min(int first, int second) {
+    return first < second ? first : second;
+}
+
 usb_error_t err;
 static bool step() {
     last_time = clock();
