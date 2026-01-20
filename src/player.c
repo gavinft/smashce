@@ -62,19 +62,88 @@ void player_update(player_t *player, input_t *input, float dt) {
         dbg_printf("not grounded\n");
     }
 
-    if (input->move.x < 0) {
-        if (player->rb.vel.x > -max_speed)
-            player->rb.vel.x += accel * input->move.x;
-    } else {
-        if (player->rb.vel.x < max_speed)
-            player->rb.vel.x += accel * input->move.x;
-    }
+    if (player->state != PLAYER_STATE_LOCKOUT) {
+        if (input->move.x < 0) {
+            if (player->rb.vel.x > -max_speed)
+                player->rb.vel.x += accel * input->move.x;
+        } else {
+            if (player->rb.vel.x < max_speed)
+                player->rb.vel.x += accel * input->move.x;
+        }
 
-    if (input->jump && player->rb.grounded)
-        player->rb.vel.y = player->jump_vel;
+        if (input->jump && player->rb.grounded)
+            player->rb.vel.y = player->jump_vel;
+    }
     
     if (player->rb.col.pos.y > 280)
         player_set_charac(player, player->charac);
+}
+
+void player_lateupdate(player_t *player, input_t *input, float dt) {
+    
+}
+
+static void hurtbox(player_t *player, collider_t* box, vec2_t* kb, float dt, player_t* hitboxes, size_t hitboxes_len) {
+    for (size_t i = 0; i < hitboxes_len; i++) {
+        collider_t *hitbox = &hitboxes[i].rb.col;
+        if (phy_col_overlap(*box, *hitbox)) {
+            if (player == &hitboxes[i])
+                continue;
+            vec2_t *vel = &hitboxes[i].rb.vel;
+            vel->x += kb->x * dt;
+            vel->y += kb->y * dt;
+        }
+    }
+}
+
+static void oiram_au(player_t *player, input_t *input, float dt, player_t* hitboxes, size_t hitboxes_len) {
+    typedef enum {
+        ANIM_DEFAULT,
+        ANIM_JAB,
+    } oiram_anim_t;
+
+    if (player->state == PLAYER_STATE_LOCKOUT) {
+        if (player->lockout_frames <= 0)
+            player->state = PLAYER_STATE_ACTIONABLE;
+        else
+            player->lockout_frames -= 1;
+    }
+
+    switch (player->animation) {
+        case ANIM_DEFAULT:
+            if (input->attack) {
+                player->animation = ANIM_JAB;
+                player->state = PLAYER_STATE_LOCKOUT;
+                player->lockout_frames = 10;
+                player->anim_frame = -1;
+            }
+            break;
+        case ANIM_JAB:
+            player->anim_frame += 1;
+            switch (player->anim_frame) {
+                case 0:
+                case 1:
+                case 2:
+                    break;
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                    hurtbox(player, &(collider_t){.pos = {player->rb.col.pos.x + 9, player->rb.col.pos.y}, .extent = {4, 4}}, &(vec2_t){10000, 300}, dt, hitboxes, hitboxes_len);
+                    break;
+                case 8:
+                case 9:
+                    break;
+                case 10:
+                    player->animation = ANIM_DEFAULT;
+            }
+            break;
+    }
+}
+
+void player_attackupdate(player_t *player, input_t *input, float dt, player_t* hitboxes, size_t hitboxes_len) {
+    oiram_au(player, input, dt, hitboxes, hitboxes_len);
 }
 
 void player_draw(player_t *player) {
