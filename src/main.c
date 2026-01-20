@@ -74,6 +74,10 @@ usb_error_t err;
 static bool step() {
     last_time = clock();
 
+    #ifndef NDEBUG
+    player_dbg_newframe();
+    #endif /* NDEBUG */
+
     // remove maybe?
     kb_Scan();
 
@@ -139,4 +143,8 @@ void draw() {
     gfx_PrintString(", ");
     gfx_PrintInt(players[0].rb.vel.y, 1);
     gfx_PrintString(")");
+
+    #ifndef NDEBUG
+    player_dbg_drawboxes(players, min(controller_state.num_connected_controllers, MAX_PLAYERS));
+    #endif /* NDEBUG */
 }

@@ -1,7 +1,14 @@
 #include <graphx.h>
 #include <debug.h>
 #include "player.h"
+#include "colors.h"
 #include "gfx/gfx.h"
+
+#ifndef NDEBUG
+#define HURTBOXES_MAX (128)
+collider_t hurtboxes[HURTBOXES_MAX];
+size_t hurtboxes_len;
+#endif /* NDEBUG */
 
 void player_set_charac(player_t *player, player_char_t charac) {
     switch (charac) {
@@ -84,6 +91,12 @@ void player_lateupdate(player_t *player, input_t *input, input_t* last_input, fl
 }
 
 static void hurtbox(player_t *player, collider_t* box, vec2_t* kb, float dt, player_t* hitboxes, size_t hitboxes_len) {
+    #ifndef NDEBUG
+    if (hurtboxes_len < HURTBOXES_MAX) {
+        hurtboxes[hurtboxes_len++] = *box;
+    }
+    #endif /* NDEBUG */
+
     for (size_t i = 0; i < hitboxes_len; i++) {
         collider_t *hitbox = &hitboxes[i].rb.col;
         if (phy_col_overlap(*box, *hitbox)) {
@@ -158,3 +171,21 @@ void player_draw(player_t *player) {
             break;
     }
 }
+
+#ifndef NDEBUG
+void player_dbg_newframe() {
+    hurtboxes_len = 0;
+}
+
+void player_dbg_drawboxes(player_t* hitboxes, size_t hitboxes_len) {
+    gfx_SetColor(COLOR_DBG_HITBOX);
+    for (size_t i = 0; i < hitboxes_len; i++) {
+        collider_t* col = &hitboxes[i].rb.col;
+        gfx_Rectangle(phy_col_left(*col), phy_col_top(*col), col->extent.x * 2, col->extent.y * 2);
+    }
+    gfx_SetColor(COLOR_DBG_HURTBOX);
+    for (size_t i = 0; i < hurtboxes_len; i++) {
+        gfx_Rectangle(phy_col_left(hurtboxes[i]), phy_col_top(hurtboxes[i]), hurtboxes[i].extent.x * 2, hurtboxes[i].extent.y * 2);
+    }
+}
+#endif /* NDEBUG */
