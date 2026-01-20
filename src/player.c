@@ -94,8 +94,13 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
                 player->rb.vel.x += accel * input->move.x;
         }
 
-        if (input->jump && !last_input->jump && player->rb.grounded )
+        if (player->rb.grounded)
+            player->jumps = 0;
+        if (input->jump && !last_input->jump && (player->rb.grounded || player->jumps < 1)) {
             player->rb.vel.y = player->jump_vel;
+            if (player->rb.grounded == false)
+                player->jumps++;
+        }
     }
     
     if (player->rb.col.pos.y > 280)
