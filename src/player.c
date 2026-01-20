@@ -10,6 +10,16 @@ collider_t hurtboxes[HURTBOXES_MAX];
 size_t hurtboxes_len;
 #endif /* NDEBUG */
 
+// reversed characters
+// - eventually ill make some tool that auto makes these + other things
+gfx_UninitedSprite(oiram_neu_l, oiram_neu_r_width, oiram_neu_r_height);
+gfx_UninitedSprite(mario_neu_l, mario_neu_r_width, mario_neu_r_height);
+
+void player_load_sprites() {
+    gfx_FlipSpriteX(oiram_neu_r, oiram_neu_l);
+    gfx_FlipSpriteX(mario_neu_r, mario_neu_l);
+}
+
 void player_set_charac(player_t *player, player_char_t charac) {
     switch (charac) {
         case PLAYER_OIRAM:
@@ -164,10 +174,10 @@ void player_draw(player_t *player) {
 
     switch (player->charac) {
         case PLAYER_OIRAM:
-            gfx_TransparentSprite(oiram, rb->col.pos.x - oiram_width / 2.0f, rb->col.pos.y - oiram_height / 2.0f);
+            gfx_TransparentSprite(oiram_neu_r, rb->col.pos.x - oiram_neu_r_width / 2.0f, rb->col.pos.y - oiram_neu_r_height / 2.0f);
             break;
         case PLAYER_MARIO:
-            gfx_TransparentSprite(mario, rb->col.pos.x - mario_width / 2.0f, rb->col.pos.y - mario_height / 2.0f);
+            gfx_TransparentSprite(mario_neu_r, rb->col.pos.x - mario_neu_r_width / 2.0f, rb->col.pos.y - mario_neu_r_height / 2.0f);
             break;
     }
 }

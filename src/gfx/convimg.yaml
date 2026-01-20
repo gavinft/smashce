@@ -14,8 +14,8 @@ converts:
     palette: global_palette
     transparent-color-index: 0
     images:
-      - oiram.png
-      - mario.png
+      - oiram_neu_r.png
+      - mario_neu_r.png
 
 outputs:
   - type: c
