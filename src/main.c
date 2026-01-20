@@ -9,6 +9,7 @@
 #include "input.h"
 #include "controller.h"
 #include "player.h"
+#include "colors.h"
 #include "gfx/gfx.h"
 
 clock_t last_time;
@@ -118,8 +119,8 @@ static bool step() {
 
 void draw() {
     /* Initialize graphics drawing */
-    gfx_FillScreen(2);
-    gfx_SetColor(3);
+    gfx_FillScreen(COLOR_BG);
+    gfx_SetColor(COLOR_STAGE);
 
    
     gfx_Rectangle(phy_col_left(stage_col), phy_col_top(stage_col), stage_col.extent.x * 2, stage_col.extent.y * 2);
@@ -131,8 +132,8 @@ void draw() {
     player_draw(&players[1]);
 
     gfx_SetTextXY(5, 5);
-    gfx_SetTextBGColor(3);
-    gfx_SetTextFGColor(2);
+    gfx_SetTextBGColor(COLOR_STAGE);
+    gfx_SetTextFGColor(COLOR_BG);
     gfx_PrintString("vel: (");
     gfx_PrintInt(players[0].rb.vel.x, 1);
     gfx_PrintString(", ");
