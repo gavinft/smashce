@@ -86,6 +86,9 @@ static bool step() {
             case CONTROLLER_KEYPAD:
                 input_scan_kpad(input);
                 break;
+
+            case CONTROLLER_DUMMY:
+                break;
         }
 
         player_update(&players[i], input, &controller->last_input, 1.0f / 30.0f);

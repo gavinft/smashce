@@ -19,6 +19,7 @@ typedef struct {
 typedef enum {
     CONTROLLER_XBOX,
     CONTROLLER_KEYPAD,
+    CONTROLLER_DUMMY,
 } controller_type_t;
 
 typedef struct {
