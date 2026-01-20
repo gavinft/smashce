@@ -38,6 +38,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 },
                 .charac = PLAYER_OIRAM,
                 .dir = PLAYER_DIR_RIGHT,
+                .sprite = oiram_neu_r,
                 .max_speed = 175,
                 .ground_accel = 2500,
                 .air_accel = 800,
@@ -57,6 +58,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                     .max_fall = 400
                 },
                 .charac = PLAYER_MARIO,
+                .sprite = mario_neu_r,
                 .dir = PLAYER_DIR_RIGHT,
                 .max_speed = 175,
                 .ground_accel = 2500,
@@ -156,6 +158,7 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
             player->anim_frame += 1;
             switch (player->anim_frame) {
                 case 0:
+                    player->sprite = player_spr(oiram_neu, player->dir);
                 case 1:
                 case 2:
                     break;
@@ -171,6 +174,8 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
                     break;
                 case 10:
                     player->animation = ANIM_DEFAULT;
+                    player->sprite = player_spr(oiram_neu, player->dir);
+                    break;
             }
             break;
     }
@@ -185,7 +190,7 @@ void player_draw(player_t *player) {
 
     switch (player->charac) {
         case PLAYER_OIRAM:
-            gfx_TransparentSprite(player_spr(oiram_neu, player->dir), rb->col.pos.x - oiram_neu_r_width / 2.0f, rb->col.pos.y - oiram_neu_r_height / 2.0f);
+            gfx_TransparentSprite(player->sprite, rb->col.pos.x - oiram_neu_r_width / 2.0f, rb->col.pos.y - oiram_neu_r_height / 2.0f);
             break;
         case PLAYER_MARIO:
             gfx_TransparentSprite(player_spr(mario_neu, player->dir), rb->col.pos.x - mario_neu_r_width / 2.0f, rb->col.pos.y - mario_neu_r_height / 2.0f);
