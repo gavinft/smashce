@@ -92,8 +92,19 @@ static bool step() {
         }
 
         player_update(&players[i], input, &controller->last_input, 1.0f / 30.0f);
+    }
 
-        controller->last_input = controller->input;
+    for (int i = 0; i < controller_state.num_connected_controllers; i++) {
+        controller_t* controller = &controller_state.controllers[i];
+        player_lateupdate(&players[i], &controller->input, &controller->last_input, 1.0f / 30.0f);
+    }
+
+    for (int i = 0; i < controller_state.num_connected_controllers; i++) {
+        controller_t* controller = &controller_state.controllers[i];
+        player_attackupdate(&players[i], &controller->input, &controller->last_input, 1.0f / 30.0f,
+            players, min(controller_state.num_connected_controllers, MAX_PLAYERS));
+
+        controller->last_input = controller->input; // has to happen at some point b4 next frame
     }
 
     phy_step(1.0f / 30.0f);
