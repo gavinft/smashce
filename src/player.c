@@ -183,9 +183,18 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
 }
 
 void player_lateupdate(player_t *player, input_t *input, input_t* last_input, float dt) {
-    if (player->grabbed_ledge) {
-        player->rb.vel = (vec2_t) {0};
-        player->rb.col.box.pos = player->grabbed_ledge->box.pos;
+    rb_t* rb = &player->rb;
+    ledge_t* ledge = player->grabbed_ledge;
+    if (ledge) {
+
+        rb->vel = (vec2_t) {0};
+        // allign the right and top of boxes
+        rb->col.box.pos.y = phy_box_top(ledge->box) + rb->col.box.extent.y + 1;
+        if (ledge->grab_dir > 0) {
+            rb->col.box.pos.x = phy_box_right(ledge->box) - rb->col.box.extent.x - 1;
+        } else {
+            rb->col.box.pos.x = phy_box_left(ledge->box) + rb->col.box.extent.x + 1;
+        }
         player->dir = player->grabbed_ledge->grab_dir;
     }
 }
