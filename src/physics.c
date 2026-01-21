@@ -4,7 +4,7 @@
 #include <math.h>
 #include "physics.h"
 
-collider_t* phy_stage_colliders[PHY_COLLIDERS_LEN] = {0};
+collider_t* phy_stage_colliders[PHY_STAGE_COLLIDERS_LEN] = {0};
 rb_t* phy_rbs[PHY_RBS_LEN] = {0};
 
 /**
@@ -87,7 +87,7 @@ void phy_step(float dt) {
         predict.box.pos.y += rb->vel.y * dt;
 
         // loop through colliders and resolve prediction based off them
-        for (int i = 0; i < PHY_COLLIDERS_LEN; i++) {
+        for (int i = 0; i < PHY_STAGE_COLLIDERS_LEN; i++) {
             if (!phy_stage_colliders[i])
                 continue;
             if (phy_stage_colliders[i] == &rb->col)

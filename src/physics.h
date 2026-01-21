@@ -27,8 +27,9 @@ typedef struct {
     bool grounded;
 } rb_t;
 
-#define PHY_COLLIDERS_LEN (4)
-extern collider_t* phy_stage_colliders[PHY_COLLIDERS_LEN];
+#define PHY_STAGE_COLLIDERS_LEN (4)
+extern collider_t* phy_stage_colliders[PHY_STAGE_COLLIDERS_LEN];
+
 #define PHY_RBS_LEN (4)
 extern rb_t* phy_rbs[PHY_RBS_LEN];
 
