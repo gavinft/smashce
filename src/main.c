@@ -17,6 +17,8 @@ clock_t last_time;
 
 collider_t stage_col = {.box = {.pos = {160, 190}, .extent = {130, 20}}, .friction = 1.3f};
 collider_t box_col = {.box = {.pos = {160, 110}, .extent = {20, 20}}, .friction = 0.3f};
+ledge_t left_ledge = {};
+ledge_t right_ledge = {};
 #define MAX_PLAYERS 2
 player_t players[MAX_PLAYERS];
 
@@ -62,6 +64,8 @@ static void begin() {
     phy_rbs[1] = &players[1].rb;
     phy_stage_colliders[0] = &stage_col;
     phy_stage_colliders[1] = &box_col;
+    phy_ledges[0] = &left_ledge;
+    phy_ledges[1] = &right_ledge;
 
     player_load_sprites();
 }

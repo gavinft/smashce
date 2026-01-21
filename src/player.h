@@ -23,6 +23,7 @@ typedef struct {
     player_char_t charac;
     player_state_t state;
     direction_t dir;
+    ledge_t *grabbed_ledge;
     float max_speed;
     float ground_accel;
     float air_accel;
