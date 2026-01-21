@@ -26,6 +26,7 @@ flippable_duplicate(mario_neu);
 flippable_duplicate(luigi_neu);
 flippable_duplicate(luigi_att);
 flippable_duplicate(luigi_ssp);
+flippable_duplicate(luigi_lg);
 
 
 void player_load_sprites() {
@@ -35,6 +36,7 @@ void player_load_sprites() {
     flip(luigi_neu);
     flip(luigi_att);
     flip(luigi_ssp);
+    flip(luigi_lg);
 }
 
 void player_set_charac(player_t *player, player_char_t charac) {
