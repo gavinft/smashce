@@ -98,7 +98,7 @@ void phy_step(float dt) {
 
             if (!phy_box_overlap(predict.box, that->box))
                 continue;
-            dbg_printf("overlap!\n");
+            // dbg_printf("overlap!\n");
             
             // Overlap handling
             bool overlap_bottom = phy_box_bot(predict.box) > phy_box_bot(that->box);
@@ -154,7 +154,7 @@ void phy_step(float dt) {
             rb->grounded = false;
     }
 
-    dbg_printf("\n");
+    // dbg_printf("\n");
 }
 
 void phy_add_force(rb_t* rb, vec2_t force) {

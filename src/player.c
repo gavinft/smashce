@@ -62,6 +62,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 .ground_accel = 2500,
                 .air_accel = 800,
                 .jump_vel = -400,
+                .can_grab_ledge = true,
             };
             break;
         
@@ -86,6 +87,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 .ground_accel = 2500,
                 .air_accel = 800,
                 .jump_vel = -400,
+                .can_grab_ledge = true,
             };
             break;
         
@@ -110,6 +112,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 .ground_accel = 2500,
                 .air_accel = 800,
                 .jump_vel = -400,
+                .can_grab_ledge = true,
             };
             break;
     }
@@ -133,10 +136,10 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
     max_speed = player->max_speed;
     if (player->rb.grounded) {
         accel = player->ground_accel * dt;
-        dbg_printf("grounded\n");
+        // dbg_printf("grounded\n");
     } else {
         accel = player->air_accel * dt;
-        dbg_printf("not grounded\n");
+        // dbg_printf("not grounded\n");
     }
 
     if (player->state != PLAYER_STATE_LOCKOUT) {
@@ -236,8 +239,24 @@ static bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player
     return hit;
 }
 
+static bool try_leave_ledge(player_t *player, input_t *input, input_t *last_input) {
+    if (input->jump && !last_input->jump) {
+        jump(player);
+        player->grabbed_ledge = NULL;
+        dbg_printf("jumped out of ledge\n");
+        return true;
+    } else if (input->move.y < -ATTACK_DIR_DEADZONE && last_input->move.y >= -ATTACK_DIR_DEADZONE) {
+        player->grabbed_ledge = NULL;
+        player->can_grab_ledge = false;
+        dbg_printf("dropped ledge\n");
+        return true;
+    }
+    return false;
+}
+
 static void oiram_au(player_t *player, input_t *input, input_t *last_input, float dt, player_t* hitboxes, size_t hitboxes_len, bool is_mario) {
     enum {
+        ANIM_LEDGE = -1,
         ANIM_DEFAULT,
         ANIM_JAB,
     };
@@ -257,6 +276,14 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
                     player->dir = DIR_LEFT;
                 else if (input->move.x > TURN_DEADZONE)
                     player->dir = DIR_RIGHT;
+            }
+            break;
+        case ANIM_LEDGE:
+            player->sprite = is_mario ? player_spr(mario_neu, player->dir) : player_spr(oiram_neu, player->dir);
+            // leaving ledge
+            if (try_leave_ledge(player, input, last_input)) {
+                player->animation = ANIM_DEFAULT;
+                player->anim_frame = 0;
             }
             break;
         case ANIM_JAB:
@@ -321,13 +348,7 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
             // ledge sprite
             player->sprite = player_spr(luigi_lg, player->dir);
             // leaving ledge
-            if (input->jump && !last_input->jump) {
-                jump(player);
-                player->grabbed_ledge = NULL;
-                player->animation = ANIM_DEFAULT;
-                player->anim_frame = 0;
-            } else if (input->move.y < -ATTACK_DIR_DEADZONE && last_input->move.y >= -ATTACK_DIR_DEADZONE) {
-                player->grabbed_ledge = NULL;
+            if (try_leave_ledge(player, input, last_input)) {
                 player->animation = ANIM_DEFAULT;
                 player->anim_frame = 0;
             }
