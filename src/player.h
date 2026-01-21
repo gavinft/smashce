@@ -31,6 +31,7 @@ typedef struct {
     float ground_accel;
     float air_accel;
     float jump_vel;
+    int damage_percent;
     int jumps;
     int lockout_frames;
     int animation;
