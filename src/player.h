@@ -19,6 +19,7 @@ typedef enum {
 typedef struct {
     rb_t rb;
     gfx_sprite_t* sprite;
+    vec2_t sprite_offset;
     player_char_t charac;
     player_state_t state;
     direction_t dir;

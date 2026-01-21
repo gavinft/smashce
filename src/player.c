@@ -358,7 +358,7 @@ void player_attackupdate(player_t *player, input_t *input, input_t* last_input, 
 
 void player_draw(player_t *player) {
     rb_t *rb = &player->rb;
-    gfx_TransparentSprite(player->sprite, rb->col.box.pos.x - player->sprite->width / 2, rb->col.box.pos.y - player->sprite->height / 2);
+    gfx_TransparentSprite(player->sprite, rb->col.box.pos.x - player->sprite->width / 2 + player->sprite_offset.x, rb->col.box.pos.y - player->sprite->height / 2 + player->sprite_offset.x);
 }
 
 #ifndef NDEBUG
