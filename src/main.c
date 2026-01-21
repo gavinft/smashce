@@ -17,8 +17,8 @@ clock_t last_time;
 
 collider_t stage_col = {.box = {.pos = {160, 190}, .extent = {130, 20}}, .friction = 1.3f};
 collider_t box_col = {.box = {.pos = {160, 110}, .extent = {20, 20}}, .friction = 0.3f};
-ledge_t left_ledge = {};
-ledge_t right_ledge = {};
+ledge_t left_ledge = {.box = {.pos = {24, 175}, .extent = {7, 10}}, .grab_dir = DIR_RIGHT};
+ledge_t right_ledge = {.box = {.pos = {296, 175}, .extent = {7, 10}}, .grab_dir = DIR_LEFT};
 #define MAX_PLAYERS 2
 player_t players[MAX_PLAYERS];
 
@@ -129,14 +129,22 @@ static bool step() {
     return !kb_IsDown(kb_KeyClear);
 }
 
+#define draw_box(box) (gfx_Rectangle(phy_box_left(box), phy_box_top(box), box.extent.x * 2, box.extent.y * 2))
+
 void draw() {
     /* Initialize graphics drawing */
     gfx_FillScreen(COLOR_BG);
+    
     gfx_SetColor(COLOR_STAGE);
+    draw_box(stage_col.box);
+    draw_box(box_col.box);
 
-   
-    gfx_Rectangle(phy_box_left(stage_col.box), phy_box_top(stage_col.box), stage_col.box.extent.x * 2, stage_col.box.extent.y * 2);
-    gfx_Rectangle(phy_box_left(box_col.box), phy_box_top(box_col.box), box_col.box.extent.x * 2, box_col.box.extent.y * 2);
+    #ifndef NDEBUG
+    /* show ledges */
+    gfx_SetColor(COLOR_DBG_HITBOX);
+    draw_box(left_ledge.box);
+    draw_box(right_ledge.box);
+    #endif /* NDEBUG */
 
     /* render players */
     player_draw(&players[0]);
@@ -156,6 +164,7 @@ void draw() {
     gfx_PrintString(")");
 
     #ifndef NDEBUG
+    /* show hitboxes and hurtboxes */
     player_dbg_drawboxes(players, min(controller_state.num_connected_controllers, MAX_PLAYERS));
     #endif /* NDEBUG */
 }
