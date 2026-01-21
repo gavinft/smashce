@@ -23,6 +23,11 @@ typedef struct {
 } collider_t;
 
 typedef struct {
+    box_t box;
+    direction_t grab_dir; /* direction player needs to face to grab */
+} ledge_t;
+
+typedef struct {
     collider_t col;
     vec2_t vel;
     vec2_t total_force;
@@ -34,7 +39,8 @@ typedef struct {
 
 #define PHY_STAGE_COLLIDERS_LEN (4)
 extern collider_t* phy_stage_colliders[PHY_STAGE_COLLIDERS_LEN];
-
+#define PHY_LEDGES_LEN (4)
+extern ledge_t* phy_ledges[PHY_LEDGES_LEN];
 #define PHY_RBS_LEN (4)
 extern rb_t* phy_rbs[PHY_RBS_LEN];
 

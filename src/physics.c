@@ -5,6 +5,7 @@
 #include "physics.h"
 
 collider_t* phy_stage_colliders[PHY_STAGE_COLLIDERS_LEN] = {0};
+ledge_t* phy_ledges[PHY_LEDGES_LEN] = {0};
 rb_t* phy_rbs[PHY_RBS_LEN] = {0};
 
 /**
