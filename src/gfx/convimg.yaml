@@ -19,6 +19,7 @@ converts:
       - luigi_neu_r.png
       - luigi_att_r.png
       - luigi_ssp_r.png
+      - luigi_lg_r.png
 
 
 outputs:
