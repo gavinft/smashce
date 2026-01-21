@@ -7,6 +7,7 @@
 typedef enum {
     PLAYER_OIRAM,
     PLAYER_MARIO,
+    PLAYER_LUIGI,
 } player_char_t;
 
 typedef enum {

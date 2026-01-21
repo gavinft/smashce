@@ -16,6 +16,10 @@ converts:
     images:
       - oiram_neu_r.png
       - mario_neu_r.png
+      - luigi_neu_r.png
+      - luigi_att_r.png
+      - luigi_ssp_r.png
+
 
 outputs:
   - type: c

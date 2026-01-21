@@ -51,10 +51,12 @@ int main(void)
 
 static void begin() {
     usb_Init(usb_event_handler, &controller_state, NULL, USB_DEFAULT_INIT_FLAGS);
-    // controller_state.controllers[0].type = CONTROLLER_KEYPAD;
-    // controller_state.num_connected_controllers = 1;
+    // controller_state.controllers[0].type = CONTROLLER_XBOX;
+    // controller_state.controllers[1].type = CONTROLLER_XBOX;
 
-    player_set_charac(&players[0], PLAYER_OIRAM);
+    // controller_state.num_connected_controllers = 2;
+
+    player_set_charac(&players[0], PLAYER_LUIGI);
     player_set_charac(&players[1], PLAYER_MARIO);
     phy_rbs[0] = &players[0].rb;
     phy_rbs[1] = &players[1].rb;
