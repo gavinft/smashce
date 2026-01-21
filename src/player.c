@@ -150,6 +150,14 @@ void player_lateupdate(player_t *player, input_t *input, input_t* last_input, fl
     
 }
 
+static void side_special_attack_update_direction(player_t *player, input_t *input) {
+    if (input->move.x > ATTACK_DIR_DEADZONE) {
+        player->dir = PLAYER_DIR_RIGHT;
+    } else if (input->move.x < ATTACK_DIR_DEADZONE) {
+        player->dir = PLAYER_DIR_LEFT;
+    }
+}
+
 static bool hurtbox(player_t *player, collider_t* box, vec2_t* kb, float dt, player_t* hitboxes, size_t hitboxes_len) {
     #ifndef NDEBUG
     if (hurtboxes_len < HURTBOXES_MAX) {
@@ -182,6 +190,7 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
 
     switch (player->animation) {
         case ANIM_DEFAULT:
+            player->sprite = is_mario ? player_spr(mario_neu, player->dir) : player_spr(oiram_neu, player->dir);
             if (input->attack && !last_input->attack) {
                 player->animation = ANIM_JAB;
                 player->state = PLAYER_STATE_LOCKOUT;
@@ -210,7 +219,6 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
                     break;
                 case 10:
                     player->animation = ANIM_DEFAULT;
-                    player->sprite = is_mario ? player_spr(mario_neu, player->dir) : player_spr(oiram_neu, player->dir);
                     break;
             }
             break;
@@ -226,6 +234,7 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
 
     switch (player->animation) {
         case ANIM_DEFAULT:
+            player->sprite = player_spr(luigi_neu, player->dir);
             if (input->attack && !last_input->attack) {
                 player->animation = ANIM_JAB;
                 player->state = PLAYER_STATE_LOCKOUT;
@@ -239,6 +248,7 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
                 player->state = PLAYER_STATE_LOCKOUT;
                 player->lockout_frames = 10;
                 player->anim_frame = -1;
+                side_special_attack_update_direction(player, input);
             }
 
             if (player->rb.grounded) {
@@ -265,7 +275,6 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
                     break;
                 case 10:
                     player->animation = ANIM_DEFAULT;
-                    player->sprite = player_spr(luigi_neu, player->dir);
                     break;
             }
             break;
@@ -298,9 +307,7 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
                     break;
                 case 29:
                     player->animation = ANIM_DEFAULT;
-                    player->sprite = player_spr(luigi_neu, player->dir);
                     player->rb.max_fall = 400;
-
                     break;
             }
             break;
