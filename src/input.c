@@ -35,11 +35,16 @@ void input_scan_kpad(input_t* input) {
     // special: mode
 
     input->move.x = 0;
+    input->move.y = 0;
     float mod = kb_Data[6] & kb_Clear ? 0.5f : 1.0f;
     if (kb_Data[7] & kb_Left)
         input->move.x -= mod;
     if (kb_Data[7] & kb_Right)
         input->move.x += mod;
+    if (kb_Data[7] & kb_Up)
+        input->move.y += mod;
+    if (kb_Data[7] & kb_Down)
+        input->move.y -= mod;
     
     input->jump = kb_Data[2] & kb_Alpha;
     input->attack = kb_Data[1] & kb_2nd;
