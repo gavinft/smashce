@@ -140,9 +140,27 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
                 player->rb.vel.x += accel * input->move.x;
         }
 
-        if (player->rb.grounded)
+        if (player->rb.grounded) {
             player->jumps = 0;
-        if (input->jump && !last_input->jump && (player->rb.grounded || player->jumps < 1)) {
+        } else if (player->rb.vel.y > 0) { // if falling, check for ledge grab
+            for (int i = 0; i < PHY_LEDGES_LEN; i++) {
+                if (!phy_ledges[i])
+                    continue;
+                ledge_t* ledge = phy_ledges[i];
+                if (player->dir != ledge->grab_dir)
+                    continue;
+                if (phy_box_overlap(player->rb.col.box, ledge->box) == false)
+                    continue;
+                // we want to have our head fallen past the top of the ledge:
+                if (phy_box_top(player->rb.col.box) <= phy_box_top(ledge->box))
+                    continue;
+                
+                // we can grab the ledge
+                player->grabbed_ledge = ledge;
+            }
+        }
+
+        if (input->jump && !last_input->jump && player->state == PLAYER_STATE_ACTIONABLE && (player->rb.grounded || player->jumps < 1)) {
             player->rb.vel.y = player->jump_vel;
             if (player->rb.grounded == false)
                 player->jumps++;
