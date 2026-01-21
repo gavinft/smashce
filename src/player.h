@@ -24,6 +24,7 @@ typedef struct {
     player_state_t state;
     direction_t dir;
     ledge_t *grabbed_ledge;
+    bool can_grab_ledge;
     float max_speed;
     float ground_accel;
     float air_accel;

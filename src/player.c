@@ -115,7 +115,13 @@ void player_set_charac(player_t *player, player_char_t charac) {
     }
 }
 
-
+static void jump(player_t *player) {
+    player->rb.vel.y = player->jump_vel;
+    player->can_grab_ledge = true;
+    if (player->rb.grounded || player->grabbed_ledge)
+        return;
+    player->jumps++;
+}
 
 void player_update(player_t *player, input_t *input, input_t* last_input, float dt) {
     float accel;
@@ -142,9 +148,11 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
                 player->rb.vel.x += accel * input->move.x;
         }
 
-        if (player->rb.grounded) {
+        if (player->rb.grounded || player->grabbed_ledge) {
             player->jumps = 0;
-        } else if (player->rb.vel.y > 0) { // if falling, check for ledge grab
+        } else if (player->rb.grounded) {
+            player->can_grab_ledge = true;
+        } else if (player->can_grab_ledge && player->rb.vel.y > 0) { // if falling, check for ledge grab
             for (int i = 0; i < PHY_LEDGES_LEN; i++) {
                 if (!phy_ledges[i])
                     continue;
@@ -159,14 +167,14 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
                 
                 // we can grab the ledge
                 player->grabbed_ledge = ledge;
+                player->animation = -1; // ledgegrab animation
+                player->anim_frame = -1;
                 dbg_printf("grabbed ledge\n");
             }
         }
 
         if (input->jump && !last_input->jump && player->state == PLAYER_STATE_ACTIONABLE && (player->rb.grounded || player->jumps < 1)) {
-            player->rb.vel.y = player->jump_vel;
-            if (player->rb.grounded == false)
-                player->jumps++;
+            jump(player);
         }
     }
     
@@ -175,7 +183,11 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
 }
 
 void player_lateupdate(player_t *player, input_t *input, input_t* last_input, float dt) {
-    
+    if (player->grabbed_ledge) {
+        player->rb.vel = (vec2_t) {0};
+        player->rb.col.box.pos = player->grabbed_ledge->box.pos;
+        player->dir = player->grabbed_ledge->grab_dir;
+    }
 }
 
 static void side_special_attack_update_direction(player_t *player, input_t *input) {
@@ -262,6 +274,7 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
 
 static void luigi_au(player_t *player, input_t *input, input_t *last_input, float dt, player_t* hitboxes, size_t hitboxes_len) {
     enum {
+        ANIM_LEDGE = -1,
         ANIM_DEFAULT,
         ANIM_JAB,
         ANIM_MISSILE,
@@ -270,6 +283,7 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
     switch (player->animation) {
         case ANIM_DEFAULT:
             player->sprite = player_spr(luigi_neu, player->dir);
+            player->rb.max_fall = 400;
             if (input->attack && !last_input->attack) {
                 player->animation = ANIM_JAB;
                 player->state = PLAYER_STATE_LOCKOUT;
@@ -291,6 +305,22 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
                     player->dir = DIR_LEFT;
                 else if (input->move.x > TURN_DEADZONE)
                     player->dir = DIR_RIGHT;
+            }
+            break;
+        case ANIM_LEDGE:
+            // lateupdate returns to ledge
+            // ledge sprite
+            player->sprite = player_spr(luigi_lg, player->dir);
+            // leaving ledge
+            if (input->jump && !last_input->jump) {
+                jump(player);
+                player->grabbed_ledge = NULL;
+                player->animation = ANIM_DEFAULT;
+                player->anim_frame = 0;
+            } else if (input->move.y < -ATTACK_DIR_DEADZONE && last_input->move.y >= -ATTACK_DIR_DEADZONE) {
+                player->grabbed_ledge = NULL;
+                player->animation = ANIM_DEFAULT;
+                player->anim_frame = 0;
             }
             break;
         case ANIM_JAB:
@@ -346,7 +376,6 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
                     break;
                 case 29:
                     player->animation = ANIM_DEFAULT;
-                    player->rb.max_fall = 400;
                     break;
             }
             break;
