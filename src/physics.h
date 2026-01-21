@@ -8,8 +8,12 @@
 #define PHY_GRAVITY 900
 
 typedef struct {
-    vec2_t pos; /* center of collider */
-    vec2_t extent; /* x-width and y-height */
+    vec2_t pos; /* center of box/collider */
+    vec2_t extent; /* x-width/2 and y-height/2 */
+} box_t;
+
+typedef struct {
+    box_t box;
     uint8_t layer;
     float friction;
 } collider_t;
@@ -27,14 +31,14 @@ typedef struct {
 #define phy_layer_player (1 << 0)
 #define phy_layer_stage (1 << 1)
 
-#define phy_col_bot(col) ((col).pos.y + (col).extent.y)
-#define phy_col_top(col) ((col).pos.y - (col).extent.y)
-#define phy_col_left(col) ((col).pos.x - (col).extent.x)
-#define phy_col_right(col) ((col).pos.x + (col).extent.x)
-#define phy_col_overlap(col1, col2) (phy_col_bot(col1) > phy_col_top(col2) && \
-                                     phy_col_top(col1) < phy_col_bot(col2) && \
-                                     phy_col_left(col1) < phy_col_right(col2) && \
-                                     phy_col_right(col1) > phy_col_left(col2))
+#define phy_box_bot(box) ((box).pos.y + (box).extent.y)
+#define phy_box_top(box) ((box).pos.y - (box).extent.y)
+#define phy_box_left(box) ((box).pos.x - (box).extent.x)
+#define phy_box_right(box) ((box).pos.x + (box).extent.x)
+#define phy_box_overlap(box1, box2) (phy_box_bot(box1) > phy_box_top(box2) && \
+                                     phy_box_top(box1) < phy_box_bot(box2) && \
+                                     phy_box_left(box1) < phy_box_right(box2) && \
+                                     phy_box_right(box1) > phy_box_left(box2))
 
 #define PHY_COLLIDERS_LEN (4)
 extern collider_t* phy_stage_colliders[PHY_COLLIDERS_LEN];

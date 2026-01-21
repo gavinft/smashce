@@ -22,17 +22,17 @@ static inline float colpoint(float beg, float end, float wall) {
 
 static void fix_pos_x(collider_t *predict, collider_t *that, bool overlap_left, bool overlap_right) {
     if (overlap_left) {
-        predict->pos.x = phy_col_left(*that) - predict->extent.x;
+        predict->box.pos.x = phy_box_left(that->box) - predict->box.extent.x;
     } else if (overlap_right) {
-        predict->pos.x = phy_col_right(*that) + predict->extent.x;
+        predict->box.pos.x = phy_box_right(that->box) + predict->box.extent.x;
     }
 }
 
 static void fix_pos_y(collider_t *predict, collider_t *that, bool overlap_top, bool overlap_bottom) {
     if (overlap_top) {
-        predict->pos.y = phy_col_top(*that) - predict->extent.y;
+        predict->box.pos.y = phy_box_top(that->box) - predict->box.extent.y;
     } else if (overlap_bottom) {
-        predict->pos.y = phy_col_bot(*that) + predict->extent.y;
+        predict->box.pos.y = phy_box_bot(that->box) + predict->box.extent.y;
     }
 }
 
@@ -83,8 +83,8 @@ void phy_step(float dt) {
         rb->vel.x += -1 * rb->resistance * rb->vel.x;
         // rb->vel.y += -1 * rb->floatness * rb->vel.y;
 
-        predict.pos.x += rb->vel.x * dt; /* predict based off velocity */
-        predict.pos.y += rb->vel.y * dt;
+        predict.box.pos.x += rb->vel.x * dt; /* predict based off velocity */
+        predict.box.pos.y += rb->vel.y * dt;
 
         // loop through colliders and resolve prediction based off them
         for (int i = 0; i < PHY_COLLIDERS_LEN; i++) {
@@ -97,31 +97,31 @@ void phy_step(float dt) {
 
             if (that->layer & phy_layer_player)
                 continue;
-            if (!phy_col_overlap(predict, *that))
+            if (!phy_box_overlap(predict.box, that->box))
                 continue;
             dbg_printf("overlap!\n");
             
             // Overlap handling
-            bool overlap_bottom = phy_col_bot(predict) > phy_col_bot(*that);
-            bool overlap_top = phy_col_top(predict) < phy_col_top(*that);
-            bool overlap_left = phy_col_left(predict) < phy_col_left(*that);
-            bool overlap_right = phy_col_right(predict) > phy_col_right(*that);
+            bool overlap_bottom = phy_box_bot(predict.box) > phy_box_bot(that->box);
+            bool overlap_top = phy_box_top(predict.box) < phy_box_top(that->box);
+            bool overlap_left = phy_box_left(predict.box) < phy_box_left(that->box);
+            bool overlap_right = phy_box_right(predict.box) > phy_box_right(that->box);
             float xt, yt;
 
             // check when x intersect happens
             if (rb->vel.x > 0 && overlap_left) {
-                xt = colpoint(phy_col_right(current), phy_col_right(predict), phy_col_left(*that));
+                xt = colpoint(phy_box_right(current.box), phy_box_right(predict.box), phy_box_left(that->box));
             } else if (rb->vel.x < 0 && overlap_right) {
-                xt = colpoint(phy_col_left(current), phy_col_left(predict), phy_col_right(*that));
+                xt = colpoint(phy_box_left(current.box), phy_box_left(predict.box), phy_box_right(that->box));
             } else {
                 xt = -1.0f;
             }
 
             // check when y intersect happens
             if (rb->vel.y > 0 && overlap_top) {
-                yt = colpoint(phy_col_bot(current), phy_col_bot(predict), phy_col_top(*that));
+                yt = colpoint(phy_box_bot(current.box), phy_box_bot(predict.box), phy_box_top(that->box));
             } else if (rb->vel.y < 0 && overlap_bottom) {
-                yt = colpoint(phy_col_top(current), phy_col_top(predict), phy_col_bot(*that));
+                yt = colpoint(phy_box_top(current.box), phy_box_top(predict.box), phy_box_bot(that->box));
             } else {
                 yt = -1.0f;
             }
