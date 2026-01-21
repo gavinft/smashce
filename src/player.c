@@ -157,6 +157,7 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
                 
                 // we can grab the ledge
                 player->grabbed_ledge = ledge;
+                dbg_printf("grabbed ledge\n");
             }
         }
 
