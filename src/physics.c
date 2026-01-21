@@ -95,8 +95,6 @@ void phy_step(float dt) {
 
             collider_t* that = phy_stage_colliders[i];
 
-            if (that->layer & phy_layer_player)
-                continue;
             if (!phy_box_overlap(predict.box, that->box))
                 continue;
             dbg_printf("overlap!\n");

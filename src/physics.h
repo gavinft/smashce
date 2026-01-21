@@ -14,7 +14,6 @@ typedef struct {
 
 typedef struct {
     box_t box;
-    uint8_t layer;
     float friction;
 } collider_t;
 
@@ -28,8 +27,10 @@ typedef struct {
     bool grounded;
 } rb_t;
 
-#define phy_layer_player (1 << 0)
-#define phy_layer_stage (1 << 1)
+#define PHY_COLLIDERS_LEN (4)
+extern collider_t* phy_stage_colliders[PHY_COLLIDERS_LEN];
+#define PHY_RBS_LEN (4)
+extern rb_t* phy_rbs[PHY_RBS_LEN];
 
 #define phy_box_bot(box) ((box).pos.y + (box).extent.y)
 #define phy_box_top(box) ((box).pos.y - (box).extent.y)
@@ -39,12 +40,6 @@ typedef struct {
                                      phy_box_top(box1) < phy_box_bot(box2) && \
                                      phy_box_left(box1) < phy_box_right(box2) && \
                                      phy_box_right(box1) > phy_box_left(box2))
-
-#define PHY_COLLIDERS_LEN (4)
-extern collider_t* phy_stage_colliders[PHY_COLLIDERS_LEN];
-
-#define PHY_RBS_LEN (4)
-extern rb_t* phy_rbs[PHY_RBS_LEN];
 
 void phy_step(float dt);
 void phy_add_force(rb_t* rb, vec2_t force);

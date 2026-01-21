@@ -48,7 +48,6 @@ void player_set_charac(player_t *player, player_char_t charac) {
                             .pos = {150, 30},
                             .extent = {16 / 2, 27.0f / 2}
                         },
-                        .layer = phy_layer_player,
                         .friction = 1.0f
                     },
                     .resistance = 0.1f,
@@ -73,7 +72,6 @@ void player_set_charac(player_t *player, player_char_t charac) {
                             .pos = {170, 30},
                             .extent = {16 / 2, 27.0f / 2}
                         },
-                        .layer = phy_layer_player,
                         .friction = 1.0f
                     },
                     .resistance = 0.1f,
@@ -98,7 +96,6 @@ void player_set_charac(player_t *player, player_char_t charac) {
                             .pos = {170, 30},
                             .extent = {luigi_neu_r_width / 2.0f, luigi_neu_r_height / 2.0f}
                         },
-                        .layer = phy_layer_player,
                         .friction = 0.8f
                     },
                     .resistance = 0.1f,

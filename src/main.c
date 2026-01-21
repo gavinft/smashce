@@ -15,8 +15,8 @@
 clock_t last_time;
 #define FRAME_TIME CLOCKS_PER_SEC / 30.0
 
-collider_t stage_col = {.box = {.pos = {160, 190}, .extent = {130, 20}}, .layer = phy_layer_stage, .friction = 1.3f};
-collider_t box_col = {.box = {.pos = {160, 110}, .extent = {20, 20}}, .layer = phy_layer_stage};
+collider_t stage_col = {.box = {.pos = {160, 190}, .extent = {130, 20}}, .friction = 1.3f};
+collider_t box_col = {.box = {.pos = {160, 110}, .extent = {20, 20}}, .friction = 0.3f};
 #define MAX_PLAYERS 2
 player_t players[MAX_PLAYERS];
 
