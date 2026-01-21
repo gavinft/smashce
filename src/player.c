@@ -7,7 +7,7 @@
 
 #ifndef NDEBUG
 #define HURTBOXES_MAX (128)
-collider_t hurtboxes[HURTBOXES_MAX];
+box_t hurtboxes[HURTBOXES_MAX];
 size_t hurtboxes_len;
 #endif /* NDEBUG */
 
@@ -20,14 +20,13 @@ size_t hurtboxes_len;
 #define flip(name) gfx_FlipSpriteY(name ## _r, name ## _l)
 
 // reversed characters
-// - eventually ill make some tool that auto makes these + other things
-// gfx_UninitedSprite(oiram_neu_l, oiram_neu_r_width, oiram_neu_r_height);
 flippable_duplicate(oiram_neu);
 flippable_duplicate(mario_neu);
 
 flippable_duplicate(luigi_neu);
 flippable_duplicate(luigi_att);
 flippable_duplicate(luigi_ssp);
+
 
 void player_load_sprites() {
     flip(oiram_neu);
@@ -44,9 +43,10 @@ void player_set_charac(player_t *player, player_char_t charac) {
             *player = (player_t) {
                 .rb = {
                     .col = {
-                        .pos = {150, 30},
-                        .extent = {16 / 2, 27.0f / 2},
-                        .layer = phy_layer_player,
+                        .box = {
+                            .pos = {150, 30},
+                            .extent = {16 / 2, 27.0f / 2}
+                        },
                         .friction = 1.0f
                     },
                     .resistance = 0.1f,
@@ -54,7 +54,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                     .max_fall = 400
                 },
                 .charac = PLAYER_OIRAM,
-                .dir = PLAYER_DIR_RIGHT,
+                .dir = DIR_RIGHT,
                 .sprite = oiram_neu_r,
                 .max_speed = 175,
                 .ground_accel = 2500,
@@ -67,9 +67,10 @@ void player_set_charac(player_t *player, player_char_t charac) {
             *player = (player_t) {
                 .rb = {
                     .col = {
-                        .pos = {170, 30},
-                        .extent = {16 / 2, 27.0f / 2},
-                        .layer = phy_layer_player,
+                        .box = {
+                            .pos = {170, 30},
+                            .extent = {16 / 2, 27.0f / 2}
+                        },
                         .friction = 1.0f
                     },
                     .resistance = 0.1f,
@@ -78,7 +79,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 },
                 .charac = PLAYER_MARIO,
                 .sprite = mario_neu_r,
-                .dir = PLAYER_DIR_RIGHT,
+                .dir = DIR_RIGHT,
                 .max_speed = 175,
                 .ground_accel = 2500,
                 .air_accel = 800,
@@ -90,9 +91,10 @@ void player_set_charac(player_t *player, player_char_t charac) {
             *player = (player_t) {
                 .rb = {
                     .col = {
-                        .pos = {170, 30},
-                        .extent = {luigi_neu_r_width / 2.0f, luigi_neu_r_height / 2.0f},
-                        .layer = phy_layer_player,
+                        .box = {
+                            .pos = {170, 30},
+                            .extent = {luigi_neu_r_width / 2.0f, luigi_neu_r_height / 2.0f}
+                        },
                         .friction = 0.8f
                     },
                     .resistance = 0.1f,
@@ -101,7 +103,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 },
                 .charac = PLAYER_LUIGI,
                 .sprite = luigi_neu_r,
-                .dir = PLAYER_DIR_RIGHT,
+                .dir = DIR_RIGHT,
                 .max_speed = 175,
                 .ground_accel = 2500,
                 .air_accel = 800,
@@ -147,7 +149,7 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
         }
     }
     
-    if (player->rb.col.pos.y > 280)
+    if (player->rb.col.box.pos.y > 280)
         player_set_charac(player, player->charac);
 }
 
@@ -157,13 +159,13 @@ void player_lateupdate(player_t *player, input_t *input, input_t* last_input, fl
 
 static void side_special_attack_update_direction(player_t *player, input_t *input) {
     if (input->move.x > ATTACK_DIR_DEADZONE) {
-        player->dir = PLAYER_DIR_RIGHT;
+        player->dir = DIR_RIGHT;
     } else if (input->move.x < ATTACK_DIR_DEADZONE) {
-        player->dir = PLAYER_DIR_LEFT;
+        player->dir = DIR_LEFT;
     }
 }
 
-static bool hurtbox(player_t *player, collider_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len) {
+static bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len) {
     #ifndef NDEBUG
     if (hurtboxes_len < HURTBOXES_MAX) {
         hurtboxes[hurtboxes_len++] = *box;
@@ -174,7 +176,7 @@ static bool hurtbox(player_t *player, collider_t* box, vec2_t* kb, int damage, p
 
     for (size_t i = 0; i < hitboxes_len; i++) {
         collider_t *hitbox = &hitboxes[i].rb.col;
-        if (phy_col_overlap(*box, *hitbox)) {
+        if (phy_box_overlap(*box, hitbox->box)) {
             if (player == &hitboxes[i])
                 continue;
 
@@ -210,9 +212,9 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
             }
             if (player->rb.grounded) {
                 if (input->move.x < -TURN_DEADZONE)
-                    player->dir = PLAYER_DIR_LEFT;
+                    player->dir = DIR_LEFT;
                 else if (input->move.x > TURN_DEADZONE)
-                    player->dir = PLAYER_DIR_RIGHT;
+                    player->dir = DIR_RIGHT;
             }
             break;
         case ANIM_JAB:
@@ -224,7 +226,7 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
                     break;
                 case 3: case 4: case 5: case 6: case 7:
                     hurtbox(player, 
-                        &(collider_t){.pos = {player->rb.col.pos.x + 9 * player->dir, player->rb.col.pos.y}, .extent = {4, 4}},
+                        &(box_t){.pos = {player->rb.col.box.pos.x + 9 * player->dir, player->rb.col.box.pos.y}, .extent = {4, 4}},
                         &(vec2_t){player->dir * 300, -50}, 1, hitboxes, hitboxes_len);
                     break;
                 case 8: case 9:
@@ -265,9 +267,9 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
 
             if (player->rb.grounded) {
                 if (input->move.x < -TURN_DEADZONE)
-                    player->dir = PLAYER_DIR_LEFT;
+                    player->dir = DIR_LEFT;
                 else if (input->move.x > TURN_DEADZONE)
-                    player->dir = PLAYER_DIR_RIGHT;
+                    player->dir = DIR_RIGHT;
             }
             break;
         case ANIM_JAB:
@@ -282,7 +284,7 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
                     break;
                 case 4: case 5: case 6: case 7:
                     hurtbox(player,
-                        &(collider_t){.pos = {player->rb.col.pos.x + 9 * player->dir, player->rb.col.pos.y}, .extent = {4, 4}},
+                        &(box_t){.pos = {player->rb.col.box.pos.x + 9 * player->dir, player->rb.col.box.pos.y}, .extent = {4, 4}},
                         &(vec2_t){player->dir * 300, -50}, 1, hitboxes, hitboxes_len);
                     break;
                 case 8: case 9:
@@ -310,7 +312,7 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
                 case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23: case 24: case 25:
                     (void)0;
                     bool hit = hurtbox(player,
-                        &(collider_t){.pos = {player->rb.col.pos.x, player->rb.col.pos.y}, .extent = {11, 5}},
+                        &(box_t){.pos = {player->rb.col.box.pos.x, player->rb.col.box.pos.y}, .extent = {11, 5}},
                         &(vec2_t){player->dir * 10000, 200}, 10, hitboxes, hitboxes_len);
                     
                     if (hit) {
@@ -356,7 +358,7 @@ void player_attackupdate(player_t *player, input_t *input, input_t* last_input, 
 
 void player_draw(player_t *player) {
     rb_t *rb = &player->rb;
-    gfx_TransparentSprite(player->sprite, rb->col.pos.x - player->sprite->width / 2, rb->col.pos.y - player->sprite->height / 2);
+    gfx_TransparentSprite(player->sprite, rb->col.box.pos.x - player->sprite->width / 2 + player->sprite_offset.x, rb->col.box.pos.y - player->sprite->height / 2 + player->sprite_offset.x);
 }
 
 #ifndef NDEBUG
@@ -368,11 +370,11 @@ void player_dbg_drawboxes(player_t* hitboxes, size_t hitboxes_len) {
     gfx_SetColor(COLOR_DBG_HITBOX);
     for (size_t i = 0; i < hitboxes_len; i++) {
         collider_t* col = &hitboxes[i].rb.col;
-        gfx_Rectangle(phy_col_left(*col), phy_col_top(*col), col->extent.x * 2, col->extent.y * 2);
+        gfx_Rectangle(phy_box_left(col->box), phy_box_top(col->box), col->box.extent.x * 2, col->box.extent.y * 2);
     }
     gfx_SetColor(COLOR_DBG_HURTBOX);
     for (size_t i = 0; i < hurtboxes_len; i++) {
-        gfx_Rectangle(phy_col_left(hurtboxes[i]), phy_col_top(hurtboxes[i]), hurtboxes[i].extent.x * 2, hurtboxes[i].extent.y * 2);
+        gfx_Rectangle(phy_box_left(hurtboxes[i]), phy_box_top(hurtboxes[i]), hurtboxes[i].extent.x * 2, hurtboxes[i].extent.y * 2);
     }
 }
 #endif /* NDEBUG */
