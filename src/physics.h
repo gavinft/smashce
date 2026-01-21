@@ -17,6 +17,8 @@ typedef struct {
 typedef struct {
     collider_t col;
     vec2_t vel;
+    vec2_t total_force;
+    float inv_mass;
     float resistance;
     float max_fall;
     bool grounded;
@@ -41,5 +43,6 @@ extern collider_t* phy_stage_colliders[PHY_COLLIDERS_LEN];
 extern rb_t* phy_rbs[PHY_RBS_LEN];
 
 void phy_step(float dt);
+void phy_add_force(rb_t* rb, vec2_t force);
 
 #endif /* PHYSICS_H */

@@ -14,6 +14,8 @@ size_t hurtboxes_len;
 #define TURN_DEADZONE (0.1f)
 #define ATTACK_DIR_DEADZONE (0.1f)
 
+#define ATTACK_PERCENT_SCALE (100)
+
 #define flippable_duplicate(name) gfx_UninitedSprite(name ## _l, name ## _r_width, name ## _r_height)
 #define flip(name) gfx_FlipSpriteY(name ## _r, name ## _l)
 
@@ -48,6 +50,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                         .friction = 1.0f
                     },
                     .resistance = 0.1f,
+                    .inv_mass = 1 / 2.0f,
                     .max_fall = 400
                 },
                 .charac = PLAYER_OIRAM,
@@ -70,6 +73,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                         .friction = 1.0f
                     },
                     .resistance = 0.1f,
+                    .inv_mass = 1 / 2.0f,
                     .max_fall = 400
                 },
                 .charac = PLAYER_MARIO,
@@ -92,6 +96,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                         .friction = 0.8f
                     },
                     .resistance = 0.1f,
+                    .inv_mass = 1 / 2.0f,
                     .max_fall = 400
                 },
                 .charac = PLAYER_LUIGI,
@@ -158,7 +163,7 @@ static void side_special_attack_update_direction(player_t *player, input_t *inpu
     }
 }
 
-static bool hurtbox(player_t *player, collider_t* box, vec2_t* kb, float dt, player_t* hitboxes, size_t hitboxes_len) {
+static bool hurtbox(player_t *player, collider_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len) {
     #ifndef NDEBUG
     if (hurtboxes_len < HURTBOXES_MAX) {
         hurtboxes[hurtboxes_len++] = *box;
@@ -172,9 +177,14 @@ static bool hurtbox(player_t *player, collider_t* box, vec2_t* kb, float dt, pla
         if (phy_col_overlap(*box, *hitbox)) {
             if (player == &hitboxes[i])
                 continue;
-            vec2_t *vel = &hitboxes[i].rb.vel;
-            vel->x += kb->x * dt;
-            vel->y += kb->y * dt;
+
+            hitboxes[i].damage_percent += damage;
+
+            float base_kb = ATTACK_PERCENT_SCALE * (hitboxes[i].damage_percent + 10);
+            vec2_t total_kb = vec_AddMagnitude(*kb, base_kb);
+
+            phy_add_force(&hitboxes[i].rb, total_kb);
+            
             hit = true;
         }
     }
@@ -213,7 +223,9 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
                 case 1: case 2:
                     break;
                 case 3: case 4: case 5: case 6: case 7:
-                    hurtbox(player, &(collider_t){.pos = {player->rb.col.pos.x + 9 * player->dir, player->rb.col.pos.y}, .extent = {4, 4}}, &(vec2_t){player->dir * 5000, -1000}, dt, hitboxes, hitboxes_len);
+                    hurtbox(player, 
+                        &(collider_t){.pos = {player->rb.col.pos.x + 9 * player->dir, player->rb.col.pos.y}, .extent = {4, 4}},
+                        &(vec2_t){player->dir * 300, -50}, 1, hitboxes, hitboxes_len);
                     break;
                 case 8: case 9:
                     break;
@@ -269,7 +281,9 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
                     player->sprite = player_spr(luigi_att, player->dir);
                     break;
                 case 4: case 5: case 6: case 7:
-                    hurtbox(player, &(collider_t){.pos = {player->rb.col.pos.x + 9 * player->dir, player->rb.col.pos.y}, .extent = {4, 4}}, &(vec2_t){player->dir * 5000, -1000}, dt, hitboxes, hitboxes_len);
+                    hurtbox(player,
+                        &(collider_t){.pos = {player->rb.col.pos.x + 9 * player->dir, player->rb.col.pos.y}, .extent = {4, 4}},
+                        &(vec2_t){player->dir * 300, -50}, 1, hitboxes, hitboxes_len);
                     break;
                 case 8: case 9:
                     break;
@@ -290,12 +304,14 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
                 case 1: case 2: case 3: case 4: case 5: case 6: case 7: case 8:
                     break;
                 case 9:
-                    player->rb.vel.x = player->dir * player->max_speed * 5;
+                    player->rb.vel.x = player->dir * player->max_speed * 3;
                     player->rb.max_fall = 80;
                     break;
                 case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23: case 24: case 25:
                     (void)0;
-                    bool hit = hurtbox(player, &(collider_t){.pos = {player->rb.col.pos.x, player->rb.col.pos.y}, .extent = {11, 5}}, &(vec2_t){player->dir * 5000, -1000}, dt, hitboxes, hitboxes_len);
+                    bool hit = hurtbox(player,
+                        &(collider_t){.pos = {player->rb.col.pos.x, player->rb.col.pos.y}, .extent = {11, 5}},
+                        &(vec2_t){player->dir * 10000, 200}, 10, hitboxes, hitboxes_len);
                     
                     if (hit) {
                         player->anim_frame += 3;

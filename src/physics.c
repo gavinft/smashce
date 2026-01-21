@@ -72,6 +72,13 @@ void phy_step(float dt) {
         // gravity
         if (rb->vel.y < rb->max_fall)
             rb->vel.y += PHY_GRAVITY * dt;
+
+        // accumulated forces
+        rb->vel.x += rb->total_force.x * rb->inv_mass * dt;
+        rb->vel.y += rb->total_force.y * rb->inv_mass * dt;
+
+        rb->total_force = (vec2_t) { 0 };
+
         // air resistance
         rb->vel.x += -1 * rb->resistance * rb->vel.x;
         // rb->vel.y += -1 * rb->floatness * rb->vel.y;
@@ -149,4 +156,9 @@ void phy_step(float dt) {
     }
 
     dbg_printf("\n");
+}
+
+void phy_add_force(rb_t* rb, vec2_t force) {
+    rb->total_force.x += force.x;
+    rb->total_force.y += force.y;
 }
