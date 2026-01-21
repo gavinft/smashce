@@ -20,14 +20,13 @@ size_t hurtboxes_len;
 #define flip(name) gfx_FlipSpriteY(name ## _r, name ## _l)
 
 // reversed characters
-// - eventually ill make some tool that auto makes these + other things
-// gfx_UninitedSprite(oiram_neu_l, oiram_neu_r_width, oiram_neu_r_height);
 flippable_duplicate(oiram_neu);
 flippable_duplicate(mario_neu);
 
 flippable_duplicate(luigi_neu);
 flippable_duplicate(luigi_att);
 flippable_duplicate(luigi_ssp);
+
 
 void player_load_sprites() {
     flip(oiram_neu);
@@ -55,7 +54,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                     .max_fall = 400
                 },
                 .charac = PLAYER_OIRAM,
-                .dir = PLAYER_DIR_RIGHT,
+                .dir = DIR_RIGHT,
                 .sprite = oiram_neu_r,
                 .max_speed = 175,
                 .ground_accel = 2500,
@@ -80,7 +79,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 },
                 .charac = PLAYER_MARIO,
                 .sprite = mario_neu_r,
-                .dir = PLAYER_DIR_RIGHT,
+                .dir = DIR_RIGHT,
                 .max_speed = 175,
                 .ground_accel = 2500,
                 .air_accel = 800,
@@ -104,7 +103,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 },
                 .charac = PLAYER_LUIGI,
                 .sprite = luigi_neu_r,
-                .dir = PLAYER_DIR_RIGHT,
+                .dir = DIR_RIGHT,
                 .max_speed = 175,
                 .ground_accel = 2500,
                 .air_accel = 800,
@@ -160,9 +159,9 @@ void player_lateupdate(player_t *player, input_t *input, input_t* last_input, fl
 
 static void side_special_attack_update_direction(player_t *player, input_t *input) {
     if (input->move.x > ATTACK_DIR_DEADZONE) {
-        player->dir = PLAYER_DIR_RIGHT;
+        player->dir = DIR_RIGHT;
     } else if (input->move.x < ATTACK_DIR_DEADZONE) {
-        player->dir = PLAYER_DIR_LEFT;
+        player->dir = DIR_LEFT;
     }
 }
 
@@ -213,9 +212,9 @@ static void oiram_au(player_t *player, input_t *input, input_t *last_input, floa
             }
             if (player->rb.grounded) {
                 if (input->move.x < -TURN_DEADZONE)
-                    player->dir = PLAYER_DIR_LEFT;
+                    player->dir = DIR_LEFT;
                 else if (input->move.x > TURN_DEADZONE)
-                    player->dir = PLAYER_DIR_RIGHT;
+                    player->dir = DIR_RIGHT;
             }
             break;
         case ANIM_JAB:
@@ -268,9 +267,9 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
 
             if (player->rb.grounded) {
                 if (input->move.x < -TURN_DEADZONE)
-                    player->dir = PLAYER_DIR_LEFT;
+                    player->dir = DIR_LEFT;
                 else if (input->move.x > TURN_DEADZONE)
-                    player->dir = PLAYER_DIR_RIGHT;
+                    player->dir = DIR_RIGHT;
             }
             break;
         case ANIM_JAB:

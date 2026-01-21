@@ -16,17 +16,12 @@ typedef enum {
     PLAYER_STATE_FREEFALL,
 } player_state_t;
 
-typedef enum {
-    PLAYER_DIR_RIGHT = 1,
-    PLAYER_DIR_LEFT = -1,
-} player_direction_t;
-
 typedef struct {
     rb_t rb;
     gfx_sprite_t* sprite;
     player_char_t charac;
     player_state_t state;
-    player_direction_t dir;
+    direction_t dir;
     float max_speed;
     float ground_accel;
     float air_accel;

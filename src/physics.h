@@ -7,6 +7,11 @@
 
 #define PHY_GRAVITY 900
 
+typedef enum {
+    DIR_RIGHT = 1,
+    DIR_LEFT = -1,
+} direction_t;
+
 typedef struct {
     vec2_t pos; /* center of box/collider */
     vec2_t extent; /* x-width/2 and y-height/2 */
