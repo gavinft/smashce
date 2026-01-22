@@ -79,6 +79,9 @@ void player_lateupdate(player_t *player, input_t *input, input_t* last_input, fl
 void player_attackupdate(player_t *player, input_t *input, input_t* last_input, float dt, player_t* hitboxes, size_t hitboxes_len);
 void player_draw(player_t *player);
 bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len);
+void player_set_anim(player_t* player, animation_type_t anim, bool lockout);
+void jump(player_t *player);
+
 
 #ifndef NDEBUG
 void player_dbg_newframe();

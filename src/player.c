@@ -22,8 +22,6 @@ flippable_duplicate(luigi_ssp);
 flippable_duplicate(luigi_lg);
 flippable_duplicate(luigi_fair);
 
-static void player_anim_ready(player_t* player, animation_type_t anim, bool lockout);
-
 void player_load_sprites() {
     flip(oiram_neu);
     flip(mario_neu);
@@ -52,6 +50,10 @@ void player_set_charac(player_t *player, player_char_t charac) {
                     .inv_mass = 1 / 2.0f,
                     .max_fall = 400
                 },
+                // TESTING
+                .animations = luigi_animations,
+                .current_animation = ANIM_NEUTRAL,
+
                 .charac = PLAYER_OIRAM,
                 .dir = DIR_RIGHT,
                 .sprite = oiram_neu_r,
@@ -77,6 +79,10 @@ void player_set_charac(player_t *player, player_char_t charac) {
                     .inv_mass = 1 / 2.0f,
                     .max_fall = 400
                 },
+                // TESTING
+                .animations = luigi_animations,
+                .current_animation = ANIM_NEUTRAL,
+
                 .charac = PLAYER_MARIO,
                 .sprite = mario_neu_r,
                 .dir = DIR_RIGHT,
@@ -118,7 +124,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
     }
 }
 
-static void jump(player_t *player) {
+void jump(player_t *player) {
     player->rb.vel.y = player->jump_vel;
     player->can_grab_ledge = true;
     if (player->rb.grounded || player->grabbed_ledge)
@@ -170,7 +176,7 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
                 
                 // we can grab the ledge
                 player->grabbed_ledge = ledge;
-                player_anim_ready(player, ANIM_LEDGE_GRAB, false);
+                player_set_anim(player, ANIM_LEDGE_GRAB, false);
                 dbg_printf("grabbed ledge\n");
             }
         }
@@ -198,14 +204,6 @@ void player_lateupdate(player_t *player, input_t *input, input_t* last_input, fl
             rb->col.box.pos.x = phy_box_left(ledge->box) + rb->col.box.extent.x + 1;
         }
         player->dir = player->grabbed_ledge->grab_dir;
-    }
-}
-
-static void side_special_attack_update_direction(player_t *player, input_t *input) {
-    if (input->move.x > ATTACK_DIR_DEADZONE) {
-        player->dir = DIR_RIGHT;
-    } else if (input->move.x < ATTACK_DIR_DEADZONE) {
-        player->dir = DIR_LEFT;
     }
 }
 
@@ -240,38 +238,19 @@ bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hit
     return hit;
 }
 
-static bool try_leave_ledge(player_t *player, input_t *input, input_t *last_input) {
-    if (input->jump && !last_input->jump) {
-        jump(player);
-        player->grabbed_ledge = NULL;
-        dbg_printf("jumped out of ledge\n");
-        return true;
-    } else if (input->move.y < -ATTACK_DIR_DEADZONE && last_input->move.y >= -ATTACK_DIR_DEADZONE) {
-        player->grabbed_ledge = NULL;
-        player->can_grab_ledge = false;
-        dbg_printf("dropped ledge\n");
-        return true;
-    }
-    return false;
-}
 
-void anim_run_keyframe(player_t* player, animation_t* anim, player_t* hitboxes, int num_hitboxes) {
+void anim_run_keyframe(player_t* player, input_t* input, input_t* last_input, animation_t* anim, player_t* hitboxes, int num_hitboxes) {
 
     // get the next keyframe
+    // this could probably totally access out of bounds memory but ill only worry about that if it becomes a problem
     keyframe_t* frame = &anim->frames[player->anim_keyframe];
 
-    // run the kf if the anim frame is between kf and kf+dur
-
-    // if (player->anim_frame >= frame->frame_number &&
-    //     player->anim_frame < frame->frame_number + frame->duration)
-
-
     // check if the keyframe is the current frame
-    if (player->anim_frame < frame->frame_number ||
+    if (frame->duration != -1 &&
+        (player->anim_frame < frame->frame_number ||
         player->anim_frame >= frame->frame_number + frame->duration ||
-        player->anim_keyframe >= anim->num_keyframes) {
+        player->anim_keyframe >= anim->num_keyframes)) {
         // frame is a regular frame, return
-        dbg_printf("no keyframe on frame %d, keyframe %d, kffn %d\n", player->anim_frame, player->anim_keyframe, frame->frame_number);
 
         player->anim_frame++;
 
@@ -288,12 +267,10 @@ void anim_run_keyframe(player_t* player, animation_t* anim, player_t* hitboxes, 
     for (int i = 0; i < frame->num_actions; i++) {
         frame_data_t* action = frame->frame_actions + i;
 
-        dbg_printf("new action (%d) on frame: %d (%d) kf: %d\n\n",
-            action->type, player->anim_frame, frame->frame_number, player->anim_keyframe);
-
         switch (action->type) {
             case FRAME_CUSTOM_FUNC:
-                action->data.custom_function(player);
+                if (action->data.custom_function(player, input, last_input))
+                    return;
                 break;
             case FRAME_HURTBOX:
                 (void)0;
@@ -314,9 +291,11 @@ void anim_run_keyframe(player_t* player, animation_t* anim, player_t* hitboxes, 
             case FRAME_SET_MAXFALL:
                 player->rb.max_fall = action->data.max_fall;
                 break;
-            case FRAME_SET_ANIMATION: // maybe this is not a thing and is instead always set to neutral at end
+            case FRAME_SET_ANIMATION:
                 player->current_animation = action->data.next_anim;
-                break;
+                player->anim_frame = 0;
+                player->anim_keyframe = 0;
+                return; // return because animation has changed
             case FRAME_SET_SPRITE:
                 player->sprite = player->dir > 0 ? action->data.sprite.right : action->data.sprite.left;
                 break;
@@ -325,14 +304,15 @@ void anim_run_keyframe(player_t* player, animation_t* anim, player_t* hitboxes, 
     }
 
     // frame is a keyframe, increment both 
-    player->anim_frame++;
+    if (frame->duration != -1)
+        player->anim_frame++;
 
     // add to the keyframe if the next frame is above frme number + duration
-    if (player->anim_frame >= frame->frame_number + frame->duration)
+    if (player->anim_frame >= frame->frame_number + frame->duration && frame->duration != -1)
         player->anim_keyframe++;
 
     // reset if at end
-    if (player->anim_frame >= anim->total_frames) {
+    if (player->anim_frame >= anim->total_frames && frame->duration != -1) {
         player->anim_frame = 0;
         player->anim_keyframe = 0;
         player->current_animation = ANIM_NEUTRAL;
@@ -341,7 +321,7 @@ void anim_run_keyframe(player_t* player, animation_t* anim, player_t* hitboxes, 
 
 }
 
-static void player_anim_ready(player_t* player, animation_type_t anim, bool lockout) {
+void player_set_anim(player_t* player, animation_type_t anim, bool lockout) {
     player->current_animation = anim;
 
     if (lockout) {
@@ -354,73 +334,6 @@ static void player_anim_ready(player_t* player, animation_type_t anim, bool lock
     player->anim_keyframe = 0;
 }
 
-#define same_dir(a, b) ((a < 0 && b < 0) || (a > 0 && b > 0))
-
-static void player_step(player_t* player, input_t* input, input_t* last_input, player_t* hitboxes, int num_hitboxes) {
-    if (player->current_animation != ANIM_NEUTRAL && player->current_animation != ANIM_LEDGE_GRAB)
-        dbg_printf("stepping on animation %d\n", player->current_animation);
-
-    switch (player->current_animation) {
-        
-        case ANIM_NEUTRAL:
-            // TODO: perhaps treat this as a normal animation with an action for custom function which does most of this and actions that do player specific stuff
-            // TODO: account for different normal fall speeds
-            player->rb.max_fall = 400;
-            // TODO: deal with this (different players exist) (maybe dont)
-            player->sprite = player_spr(luigi_neu, player->dir);
-
-            // NORMAL ATTACK
-            if (input->attack && !last_input->attack && player->rb.grounded) {
-                player_anim_ready(player, ANIM_ATTACK, true);
-                break;
-            }
-
-            // SIDE AERIAL
-            if (input->attack && !last_input->attack &&
-                fabsf(input->move.x) > ATTACK_DIR_DEADZONE && !player->rb.grounded) {
-
-                if (same_dir(input->move.x, player->dir))
-                    player_anim_ready(player, ANIM_AIR_FWD, true);
-                // else 
-                //     player_anim_ready(player, ANIM_AIR_BCK, 10);
-
-                break;
-            }
-
-            // SIDE SPECIAL
-            if (input->special && !last_input->special &&
-                fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
-                player_anim_ready(player, ANIM_SP_SIDE, true);
-                side_special_attack_update_direction(player, input);
-                break;
-            }
-
-            if (player->rb.grounded) {
-                if (input->move.x < -TURN_DEADZONE)
-                    player->dir = DIR_LEFT;
-                else if (input->move.x > TURN_DEADZONE)
-                    player->dir = DIR_RIGHT;
-            }
-            break;
-
-
-        case ANIM_LEDGE_GRAB:
-
-            // TODO: Not sure this works
-            // TODO: Deal with different sprites (do as standard animation with custom function to decrement and try leave, as well as change sprite action)
-            player->sprite = player_spr(luigi_lg, player->dir);
-            // leaving ledge
-            if (try_leave_ledge(player, input, last_input))
-                player_anim_ready(player, ANIM_NEUTRAL, false);
-            
-            break;
-
-        default:
-            anim_run_keyframe(player, player->animations[player->current_animation], hitboxes, num_hitboxes);
-            return;
-    }
-
-}
 
 void player_attackupdate(player_t *player, input_t *input, input_t* last_input, float dt, player_t* hitboxes, size_t hitboxes_len) {\
 
@@ -431,7 +344,7 @@ void player_attackupdate(player_t *player, input_t *input, input_t* last_input, 
             player->lockout_frames -= 1;
     }
 
-    player_step(player, input, last_input, hitboxes, hitboxes_len);
+    anim_run_keyframe(player, input, last_input, player->animations[player->current_animation], hitboxes, hitboxes_len);
     
 }
 

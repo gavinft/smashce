@@ -165,6 +165,10 @@ void draw() {
     gfx_PrintInt(players[0].rb.vel.y, 1);
     gfx_PrintString(")");
 
+    gfx_SetTextXY(230, 5);
+    gfx_PrintString("Raw FPS: ");
+    gfx_PrintInt(CLOCKS_PER_SEC / (float)(clock() - last_time), 2);
+
     #ifndef NDEBUG
     /* show hitboxes and hurtboxes */
     player_dbg_drawboxes(players, min(controller_state.num_connected_controllers, MAX_PLAYERS));

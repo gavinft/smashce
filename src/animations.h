@@ -6,6 +6,7 @@
 #include "vec.h"
 
 struct player;
+struct input;
 
 typedef struct {
     box_t box; // pos stored as offset
@@ -15,7 +16,7 @@ typedef struct {
 } hurtbox_data_t;
 
 typedef enum {
-    ANIM_NEUTRAL = -1, // not used to index animations array
+    ANIM_NEUTRAL,
     ANIM_LEDGE_GRAB,
     ANIM_ATTACK,
     ANIM_AIR_NEU,
@@ -44,10 +45,9 @@ typedef struct {
 } lr_sprite_t;
 
 typedef struct {
-    frame_data_type_t type;
 
     union {
-        void (*custom_function)(struct player*); // this void is player for now (cant make it player_t because weird including)
+        bool (*custom_function)(struct player*, struct input*, struct input*); // returns whether or not animation ends early
         vec2_t player_velocity;
         float max_fall;
         lr_sprite_t sprite;
@@ -55,12 +55,14 @@ typedef struct {
         animation_type_t next_anim;
     } data;
 
+    frame_data_type_t type;
+
 } frame_data_t;
 
 typedef struct {
 
     frame_data_t* frame_actions;
-    int duration;
+    int duration; // set to -1 for infinite
     int num_actions;
     int frame_number;
 
