@@ -99,7 +99,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                             .pos = {170, 30},
                             .extent = {luigi_neu_r_width / 2.0f, luigi_neu_r_height / 2.0f}
                         },
-                        .friction = 0.8f
+                        .friction = 0.4f
                     },
                     .resistance = 0.1f,
                     .inv_mass = 1 / 2.0f,
@@ -108,8 +108,8 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 .charac = PLAYER_LUIGI,
                 .sprite = luigi_neu_r,
                 .dir = DIR_RIGHT,
-                .max_speed = 175,
-                .ground_accel = 2500,
+                .max_speed = 115,
+                .ground_accel = 2200,
                 .air_accel = 800,
                 .jump_vel = -400,
                 .can_grab_ledge = true,
@@ -319,6 +319,7 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
     switch (player->animation) {
         case ANIM_DEFAULT:
             player->sprite = player_spr(luigi_neu, player->dir);
+            player->sprite_offset = (vec2_t) {0};
             player->rb.max_fall = 400;
             if (input->attack && !last_input->attack) {
                 player->animation = ANIM_JAB;
@@ -362,10 +363,11 @@ static void luigi_au(player_t *player, input_t *input, input_t *last_input, floa
                     break;
                 case 3:
                     player->sprite = player_spr(luigi_att, player->dir);
+                    player->sprite_offset = (vec2_t) {player->dir * 3, 0};
                     break;
                 case 4: case 5: case 6: case 7:
                     hurtbox(player,
-                        &(box_t){.pos = {player->rb.col.box.pos.x + 9 * player->dir, player->rb.col.box.pos.y}, .extent = {4, 4}},
+                        &(box_t){.pos = {player->rb.col.box.pos.x + 15 * player->dir, player->rb.col.box.pos.y}, .extent = {11, 5}},
                         &(vec2_t){player->dir * 300, -50}, 1, hitboxes, hitboxes_len);
                     break;
                 case 8: case 9:
@@ -438,7 +440,7 @@ void player_attackupdate(player_t *player, input_t *input, input_t* last_input, 
 
 void player_draw(player_t *player) {
     rb_t *rb = &player->rb;
-    gfx_TransparentSprite(player->sprite, rb->col.box.pos.x - player->sprite->width / 2 + player->sprite_offset.x, rb->col.box.pos.y - player->sprite->height / 2 + player->sprite_offset.x);
+    gfx_TransparentSprite(player->sprite, rb->col.box.pos.x - player->sprite->width / 2 + player->sprite_offset.x, rb->col.box.pos.y - player->sprite->height / 2 + player->sprite_offset.y);
 }
 
 #ifndef NDEBUG
