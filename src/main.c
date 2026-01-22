@@ -53,10 +53,10 @@ int main(void)
 
 static void begin() {
     usb_Init(usb_event_handler, &controller_state, NULL, USB_DEFAULT_INIT_FLAGS);
-    // controller_state.controllers[0].type = CONTROLLER_KEYPAD;
-    // controller_state.controllers[1].type = CONTROLLER_DUMMY;
+    controller_state.controllers[0].type = CONTROLLER_KEYPAD;
+    controller_state.controllers[1].type = CONTROLLER_DUMMY;
 
-    // controller_state.num_connected_controllers = 2;
+    controller_state.num_connected_controllers = 2;
 
     player_set_charac(&players[0], PLAYER_LUIGI);
     player_set_charac(&players[1], PLAYER_MARIO);
@@ -68,6 +68,8 @@ static void begin() {
     phy_ledges[1] = &right_ledge;
 
     player_load_sprites();
+
+    dbg_printf("begun\n");
 }
 
 static void end() {
