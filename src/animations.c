@@ -21,7 +21,7 @@ frame_data_t l_missile_kf1[] = {
 };
 frame_data_t l_missile_kf2[] = {
     { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = luigi_missile_hit,
-        .box = {.extent = {11, 5}, .pos = { 0 }}, .damage = 10, .kb = { 10000, 200 }}},
+        .box = {.extent = {11, 5}, .pos = { 0 }}, .damage = 12, .kb = { 10000, 200 }}},
 };
 
 keyframe_t l_missile_keyframes[] = {
@@ -38,9 +38,9 @@ animation_t luigi_missile = {
 
 // //
 // frame_data_t l_jab_kf0[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_att) }; }
-frame_data_t l_jab_kf1[] = {{ .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_att) } };
-frame_data_t l_jab_kf2[] = {{ .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
-        .box = {.extent = {8, 4}, .pos = { 9, 0 }}, .damage = 1, .kb = { 300, -50 }} } };
+frame_data_t l_jab_kf1[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_att) } };
+frame_data_t l_jab_kf2[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
+        .box = {.extent = {8, 4}, .pos = { 9, 0 }}, .damage = 2, .kb = { 300, -50 }} } };
 
 
 keyframe_t l_jab_keyframes[] = {
@@ -55,9 +55,23 @@ animation_t luigi_jab = {
 };
 
 // //
+frame_data_t l_fair_kf0[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_fair) } };
+frame_data_t l_fair_kf1[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
+        .box = {.extent = {6, 6}, .pos = { 6, -6 }}, .damage = 9, .kb = { 300, 400 }} } };
+
+keyframe_t l_fair_keyframes[] = {
+    { .frame_number = 4, .duration = 1, .num_actions = 1, .frame_actions = l_fair_kf0 },
+    { .frame_number = 5, .duration = 2, .num_actions = 1, .frame_actions = l_fair_kf1 }
+};
+
+animation_t luigi_forward_air = {
+    .total_frames = 16, 
+    .num_keyframes = 2,
+    .frames = l_fair_keyframes
+};
 
 
-animation_t* luigi_animations[] = { NULL, &luigi_jab, NULL, NULL, NULL, NULL, NULL, NULL, &luigi_missile, NULL, NULL, NULL };
+animation_t* luigi_animations[] = { NULL, &luigi_jab, NULL, &luigi_forward_air, NULL, NULL, NULL, NULL, &luigi_missile, NULL, NULL, NULL };
 
 
 

@@ -66,6 +66,7 @@ extern_duplicate(luigi_neu);
 extern_duplicate(luigi_att);
 extern_duplicate(luigi_ssp);
 extern_duplicate(luigi_lg);
+extern_duplicate(luigi_fair);
 
 
 

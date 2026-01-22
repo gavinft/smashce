@@ -20,6 +20,7 @@ flippable_duplicate(luigi_neu);
 flippable_duplicate(luigi_att);
 flippable_duplicate(luigi_ssp);
 flippable_duplicate(luigi_lg);
+flippable_duplicate(luigi_fair);
 
 
 void player_load_sprites() {
@@ -31,6 +32,7 @@ void player_load_sprites() {
     flip(luigi_att);
     flip(luigi_ssp);
     flip(luigi_lg);
+    flip(luigi_fair);
 }
 
 void player_set_charac(player_t *player, player_char_t charac) {
@@ -339,6 +341,21 @@ void anim_run_keyframe(player_t* player, animation_t* anim, player_t* hitboxes, 
 
 }
 
+void player_anim_ready(player_t* player, animation_type_t anim, int lockout_frames) {
+    player->current_animation = anim;
+
+    if (lockout_frames > 0) {
+        player->state = PLAYER_STATE_LOCKOUT;
+        player->lockout_frames = 10;
+    } else 
+        player->lockout_frames = 0;
+
+    player->anim_frame = 0;
+    player->anim_keyframe = 0;
+}
+
+#define same_dir(a, b) ((a < 0 && b < 0) || (a > 0 && b > 0))
+
 void player_step(player_t* player, input_t* input, input_t* last_input, player_t* hitboxes, int num_hitboxes) {
     if (player->current_animation != ANIM_NEUTRAL && player->current_animation != ANIM_LEDGE_GRAB)
         dbg_printf("stepping on animation %d\n", player->current_animation);
@@ -352,23 +369,28 @@ void player_step(player_t* player, input_t* input, input_t* last_input, player_t
             // TODO: deal with this (different players exist) (maybe dont)
             player->sprite = player_spr(luigi_neu, player->dir);
 
-            if (input->attack && !last_input->attack) {
-                player->current_animation = ANIM_ATTACK;
-                player->state = PLAYER_STATE_LOCKOUT;
-                player->lockout_frames = 10;
-                player->anim_frame = 0;
-                player->anim_keyframe = 0;
+            // NORMAL ATTACK
+            if (input->attack && !last_input->attack && player->rb.grounded) {
+                player_anim_ready(player, ANIM_ATTACK, 10);
                 break;
             }
 
-            if (input->special && !last_input->special
-                && fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
-                    dbg_printf("erm what the beginning of side b\n");
-                player->current_animation = ANIM_SP_SIDE;
-                player->state = PLAYER_STATE_LOCKOUT;
-                player->lockout_frames = 10;
-                player->anim_frame = 0;
-                player->anim_keyframe = 0;
+            // SIDE AERIAL
+            if (input->attack && !last_input->attack &&
+                fabsf(input->move.x) > ATTACK_DIR_DEADZONE && !player->rb.grounded) {
+
+                if (same_dir(input->move.x, player->dir))
+                    player_anim_ready(player, ANIM_AIR_FWD, 10);
+                // else 
+                //     player_anim_ready(player, ANIM_AIR_BCK, 10);
+
+                break;
+            }
+
+            // SIDE SPECIAL
+            if (input->special && !last_input->special &&
+                fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
+                player_anim_ready(player, ANIM_SP_SIDE, 10);
                 side_special_attack_update_direction(player, input);
                 break;
             }
@@ -384,6 +406,7 @@ void player_step(player_t* player, input_t* input, input_t* last_input, player_t
 
         case ANIM_LEDGE_GRAB:
 
+            // TODO: Not sure this works
             // TODO: Deal with different sprites (do as standard animation with custom function to decrement and try leave, as well as change sprite action)
             player->sprite = player_spr(luigi_lg, player->dir);
             // leaving ledge
@@ -400,110 +423,6 @@ void player_step(player_t* player, input_t* input, input_t* last_input, player_t
 
 }
 
-static void luigi_au(player_t *player, input_t *input, input_t *last_input, float dt, player_t* hitboxes, size_t hitboxes_len) {
-    enum {
-        ANIM_LEDGE = -1,
-        ANIM_DEFAULT,
-        ANIM_JAB,
-        ANIM_MISSILE,
-    };
-
-    switch (player->animation_tmp) {
-        case ANIM_DEFAULT:
-            player->sprite = player_spr(luigi_neu, player->dir);
-            player->rb.max_fall = 400;
-            if (input->attack && !last_input->attack) {
-                player->animation_tmp = ANIM_JAB;
-                player->state = PLAYER_STATE_LOCKOUT;
-                player->lockout_frames = 10;
-                player->anim_frame = -1;
-                break;
-            }
-            if (input->special && !last_input->special
-                && fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
-                player->animation_tmp = ANIM_MISSILE;
-                player->state = PLAYER_STATE_LOCKOUT;
-                player->lockout_frames = 10;
-                player->anim_frame = -1;
-                side_special_attack_update_direction(player, input);
-            }
-
-            if (player->rb.grounded) {
-                if (input->move.x < -TURN_DEADZONE)
-                    player->dir = DIR_LEFT;
-                else if (input->move.x > TURN_DEADZONE)
-                    player->dir = DIR_RIGHT;
-            }
-            break;
-        case ANIM_LEDGE:
-            // lateupdate returns to ledge
-            // ledge sprite
-            player->sprite = player_spr(luigi_lg, player->dir);
-            // leaving ledge
-            if (try_leave_ledge(player, input, last_input)) {
-                player->animation_tmp = ANIM_DEFAULT;
-                player->anim_frame = 0;
-            }
-            break;
-        case ANIM_JAB:
-            player->anim_frame += 1;
-            switch (player->anim_frame) {
-                case 0:
-                    player->sprite = player_spr(luigi_neu, player->dir);
-                case 1: case 2:
-                    break;
-                case 3:
-                    player->sprite = player_spr(luigi_att, player->dir);
-                    break;
-                case 4: case 5: case 6: case 7:
-                    hurtbox(player,
-                        &(box_t){.pos = {player->rb.col.box.pos.x + 9 * player->dir, player->rb.col.box.pos.y}, .extent = {4, 4}},
-                        &(vec2_t){player->dir * 300, -50}, 1, hitboxes, hitboxes_len);
-                    break;
-                case 8: case 9:
-                    break;
-                case 10:
-                    player->animation_tmp = ANIM_DEFAULT;
-                    break;
-            }
-            break;
-
-        case ANIM_MISSILE:
-            player->anim_frame += 1;
-            switch (player->anim_frame) {
-                case 0:
-                    player->rb.vel = (vec2_t){ 0 };
-                    // TODO: change player collider
-                    player->sprite = player_spr(luigi_ssp, player->dir);
-                    player->rb.max_fall = 20;
-                case 1: case 2: case 3: case 4: case 5: case 6: case 7: case 8:
-                    break;
-                case 9:
-                    player->rb.vel.x = player->dir * player->max_speed * 3;
-                    player->rb.max_fall = 80;
-                    break;
-                case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23: case 24: case 25:
-                    (void)0;
-                    bool hit = hurtbox(player,
-                        &(box_t){.pos = {player->rb.col.box.pos.x, player->rb.col.box.pos.y}, .extent = {11, 5}},
-                        &(vec2_t){player->dir * 10000, 200}, 10, hitboxes, hitboxes_len);
-                    
-                    if (hit) {
-                        player->anim_frame += 3;
-                        // TODO: lockout framse
-                        player->rb.vel = (vec2_t){ 0 };
-                    }
-                    break;
-                case 26: case 27: case 28:
-                    break;
-                case 29:
-                    player->animation_tmp = ANIM_DEFAULT;
-                    break;
-            }
-            break;
-    }
-}
-
 void player_attackupdate(player_t *player, input_t *input, input_t* last_input, float dt, player_t* hitboxes, size_t hitboxes_len) {\
 
     if (player->state == PLAYER_STATE_LOCKOUT) {
@@ -514,19 +433,6 @@ void player_attackupdate(player_t *player, input_t *input, input_t* last_input, 
     }
 
     player_step(player, input, last_input, hitboxes, hitboxes_len);
-
-    // switch (player->charac) {
-    //     case PLAYER_OIRAM:
-    //         oiram_au(player, input, last_input, dt, hitboxes, hitboxes_len, false);
-    //         break;
-    //     case PLAYER_MARIO:
-    //         oiram_au(player, input, last_input, dt, hitboxes, hitboxes_len, true);
-    //         break;
-    //     case PLAYER_LUIGI:
-    //         luigi_au(player, input, last_input, dt, hitboxes, hitboxes_len);
-    //         break;
-
-    // }
     
 }
 
