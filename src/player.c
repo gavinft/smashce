@@ -22,6 +22,7 @@ flippable_duplicate(luigi_ssp);
 flippable_duplicate(luigi_lg);
 flippable_duplicate(luigi_fair);
 
+static void player_anim_ready(player_t* player, animation_type_t anim, bool lockout);
 
 void player_load_sprites() {
     flip(oiram_neu);
@@ -169,8 +170,7 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
                 
                 // we can grab the ledge
                 player->grabbed_ledge = ledge;
-                player->animation_tmp = -1; // ledgegrab animation_tmp
-                player->anim_frame = -1;
+                player_anim_ready(player, ANIM_LEDGE_GRAB, false);
                 dbg_printf("grabbed ledge\n");
             }
         }
@@ -341,12 +341,12 @@ void anim_run_keyframe(player_t* player, animation_t* anim, player_t* hitboxes, 
 
 }
 
-void player_anim_ready(player_t* player, animation_type_t anim, int lockout_frames) {
+static void player_anim_ready(player_t* player, animation_type_t anim, bool lockout) {
     player->current_animation = anim;
 
-    if (lockout_frames > 0) {
+    if (lockout) {
         player->state = PLAYER_STATE_LOCKOUT;
-        player->lockout_frames = 10;
+        player->lockout_frames = player->animations[anim]->total_frames;
     } else 
         player->lockout_frames = 0;
 
@@ -356,7 +356,7 @@ void player_anim_ready(player_t* player, animation_type_t anim, int lockout_fram
 
 #define same_dir(a, b) ((a < 0 && b < 0) || (a > 0 && b > 0))
 
-void player_step(player_t* player, input_t* input, input_t* last_input, player_t* hitboxes, int num_hitboxes) {
+static void player_step(player_t* player, input_t* input, input_t* last_input, player_t* hitboxes, int num_hitboxes) {
     if (player->current_animation != ANIM_NEUTRAL && player->current_animation != ANIM_LEDGE_GRAB)
         dbg_printf("stepping on animation %d\n", player->current_animation);
 
@@ -371,7 +371,7 @@ void player_step(player_t* player, input_t* input, input_t* last_input, player_t
 
             // NORMAL ATTACK
             if (input->attack && !last_input->attack && player->rb.grounded) {
-                player_anim_ready(player, ANIM_ATTACK, 10);
+                player_anim_ready(player, ANIM_ATTACK, true);
                 break;
             }
 
@@ -380,7 +380,7 @@ void player_step(player_t* player, input_t* input, input_t* last_input, player_t
                 fabsf(input->move.x) > ATTACK_DIR_DEADZONE && !player->rb.grounded) {
 
                 if (same_dir(input->move.x, player->dir))
-                    player_anim_ready(player, ANIM_AIR_FWD, 10);
+                    player_anim_ready(player, ANIM_AIR_FWD, true);
                 // else 
                 //     player_anim_ready(player, ANIM_AIR_BCK, 10);
 
@@ -390,7 +390,7 @@ void player_step(player_t* player, input_t* input, input_t* last_input, player_t
             // SIDE SPECIAL
             if (input->special && !last_input->special &&
                 fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
-                player_anim_ready(player, ANIM_SP_SIDE, 10);
+                player_anim_ready(player, ANIM_SP_SIDE, true);
                 side_special_attack_update_direction(player, input);
                 break;
             }
@@ -410,10 +410,9 @@ void player_step(player_t* player, input_t* input, input_t* last_input, player_t
             // TODO: Deal with different sprites (do as standard animation with custom function to decrement and try leave, as well as change sprite action)
             player->sprite = player_spr(luigi_lg, player->dir);
             // leaving ledge
-            if (try_leave_ledge(player, input, last_input)) {
-                player->animation_tmp = ANIM_NEUTRAL;
-                player->anim_frame = 0;
-            }
+            if (try_leave_ledge(player, input, last_input))
+                player_anim_ready(player, ANIM_NEUTRAL, false);
+            
             break;
 
         default:

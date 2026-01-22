@@ -5,12 +5,13 @@
 #include "physics.h"
 #include "vec.h"
 
+struct player;
 
 typedef struct {
     box_t box; // pos stored as offset
     vec2_t kb;
     int damage;
-    void (*on_hit)(void*); // void* is player again
+    void (*on_hit)(struct player*); // void* is player again
 } hurtbox_data_t;
 
 typedef enum {
@@ -46,7 +47,7 @@ typedef struct {
     frame_data_type_t type;
 
     union {
-        void (*custom_function)(void*); // this void is player for now (cant make it player_t because weird including)
+        void (*custom_function)(struct player*); // this void is player for now (cant make it player_t because weird including)
         vec2_t player_velocity;
         float max_fall;
         lr_sprite_t sprite;

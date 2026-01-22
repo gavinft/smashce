@@ -19,7 +19,7 @@ typedef enum {
     PLAYER_STATE_FREEFALL,
 } player_state_t;
 
-typedef struct {
+typedef struct player {
     rb_t rb;
     gfx_sprite_t* sprite;
     vec2_t sprite_offset;
@@ -39,7 +39,6 @@ typedef struct {
     int damage_percent;
     int jumps;
     int lockout_frames;
-    int animation_tmp;
     int anim_frame;
     bool can_grab_ledge;
 } player_t;

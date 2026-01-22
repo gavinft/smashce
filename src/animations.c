@@ -1,13 +1,11 @@
 #include "player.h"
-
 /* ----- animation definitions ----- */
 
 /* luigi */
 
-void luigi_missile_hit(void* p) {
-    player_t* player = p;
-    player->anim_frame += 4;
-    player->rb.vel = (vec2_t){ 0 };
+void luigi_missile_hit(player_t* p) {
+    p->anim_frame += 4;
+    p->rb.vel = (vec2_t){ 0 };
 }
 
 frame_data_t l_missile_kf0[] = {
