@@ -147,8 +147,19 @@ void draw() {
     #endif /* NDEBUG */
 
     /* render players */
+    box_t screen = {.pos = {160, 120}, .extent = {160, 120}}; // 320x240
+    player_t* oob_players[2];
+    size_t oob_players_len = 0;
+    if (phy_box_overlap(players[0].rb.col.box, screen)) {
     player_draw(&players[0]);
+    } else {
+        oob_players[oob_players_len++] = &players[0];
+    }
+    if (phy_box_overlap(players[1].rb.col.box, screen)) {
     player_draw(&players[1]);
+    } else {
+        oob_players[oob_players_len++] = &players[1];
+    }
     gfx_SetTextXY(50, GFX_LCD_HEIGHT - 20);
     gfx_PrintInt(players[0].damage_percent, 3);
     gfx_SetTextXY(100, GFX_LCD_HEIGHT - 20);
@@ -162,6 +173,28 @@ void draw() {
     gfx_PrintString(", ");
     gfx_PrintInt(players[0].rb.vel.y, 1);
     gfx_PrintString(")");
+
+    // draw out of bounds players
+    for (size_t i = 0; i < oob_players_len; i++) {
+        #define OOB_WINDOW_OFFSET (3)
+        box_t window = {oob_players[i]->rb.col.box.pos, {30, 20}};
+        
+        if (phy_box_left(oob_players[i]->rb.col.box) > phy_box_right(screen)) {
+            window.pos.x = phy_box_right(screen) - OOB_WINDOW_OFFSET - window.extent.x;
+        } else if (phy_box_right(oob_players[i]->rb.col.box) < phy_box_left(screen)) {
+            window.pos.x = phy_box_left(screen) + OOB_WINDOW_OFFSET + window.extent.x;
+        }
+
+        if (phy_box_top(oob_players[i]->rb.col.box) > phy_box_bot(screen)) {
+            window.pos.y = phy_box_bot(screen) - OOB_WINDOW_OFFSET - window.extent.y;
+        } else if (phy_box_bot(oob_players[i]->rb.col.box) < phy_box_top(screen)) {
+            window.pos.y = phy_box_top(screen) + OOB_WINDOW_OFFSET + window.extent.y;
+        }
+
+        gfx_SetColor(COLOR_DBG_HITBOX);
+        draw_box(window);
+        player_draw_pos(oob_players[i], &window.pos);
+    }
 
     #ifndef NDEBUG
     /* show hitboxes and hurtboxes */

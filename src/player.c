@@ -438,9 +438,14 @@ void player_attackupdate(player_t *player, input_t *input, input_t* last_input, 
     
 }
 
+void player_draw_pos(player_t *player, vec2_t *pos) {
+    gfx_TransparentSprite(player->sprite, pos->x - player->sprite->width / 2 + player->sprite_offset.x, pos->y - player->sprite->height / 2 + player->sprite_offset.y);
+}
+
 void player_draw(player_t *player) {
     rb_t *rb = &player->rb;
-    gfx_TransparentSprite(player->sprite, rb->col.box.pos.x - player->sprite->width / 2 + player->sprite_offset.x, rb->col.box.pos.y - player->sprite->height / 2 + player->sprite_offset.y);
+    vec2_t pos = {rb->col.box.pos.x, rb->col.box.pos.y};
+    player_draw_pos(player, &pos);
 }
 
 #ifndef NDEBUG

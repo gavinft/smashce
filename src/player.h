@@ -49,6 +49,7 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
 void player_lateupdate(player_t *player, input_t *input, input_t* last_input, float dt);
 void player_attackupdate(player_t *player, input_t *input, input_t* last_input, float dt, player_t* hitboxes, size_t hitboxes_len);
 void player_draw(player_t *player);
+void player_draw_pos(player_t *player, vec2_t *pos);
 
 #ifndef NDEBUG
 void player_dbg_newframe();
