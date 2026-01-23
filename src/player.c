@@ -245,31 +245,7 @@ bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hit
     return hit;
 }
 
-
-void anim_run_keyframe(player_t* player, input_t* input, input_t* last_input, animation_t* anim, player_t* hitboxes, int num_hitboxes) {
-
-    // get the next keyframe
-    // this could probably totally access out of bounds memory but ill only worry about that if it becomes a problem
-    keyframe_t* frame = &anim->frames[player->anim_keyframe];
-
-    // check if the keyframe is the current frame
-    if (frame->duration != -1 &&
-        (player->anim_frame < frame->frame_number ||
-        player->anim_frame >= frame->frame_number + frame->duration ||
-        player->anim_keyframe >= anim->num_keyframes)) {
-        // frame is a regular frame, return
-
-        player->anim_frame++;
-
-        if (player->anim_frame >= anim->total_frames) { // reset if at end
-            player->anim_frame = 0;
-            player->anim_keyframe = 0;
-            player->current_animation = ANIM_NEUTRAL;
-        }
-
-        return;
-    }
-
+static void anim_process_actions(player_t *player, keyframe_t *frame, input_t *input, input_t *last_input, player_t* hitboxes, int num_hitboxes) {
     // run all the things that happen in this keyframe
     for (int i = 0; i < frame->num_actions; i++) {
         frame_data_t* action = frame->frame_actions + i;
@@ -307,25 +283,65 @@ void anim_run_keyframe(player_t* player, input_t* input, input_t* last_input, an
                 player->sprite = player->dir > 0 ? action->data.sprite.right : action->data.sprite.left;
                 break;
         }
-
     }
+}
 
-    // frame is a keyframe, increment both 
-    if (frame->duration != -1)
+#ifndef NDEBUG
+void player_anim_run_keyframe(player_t* player, input_t* input, input_t* last_input, animation_t* anim, player_t* hitboxes, int num_hitboxes, bool increment) {
+#else
+void player_anim_run_keyframe(player_t* player, input_t* input, input_t* last_input, animation_t* anim, player_t* hitboxes, int num_hitboxes) {
+#endif
+
+    // get the next keyframe
+    // this could probably totally access out of bounds memory but ill only worry about that if it becomes a problem
+    keyframe_t* frame = &anim->frames[player->anim_keyframe];
+
+    // check if the keyframe is the current frame
+    if (
+    #ifndef NDEBUG
+        increment &&
+    #endif 
+        (player->anim_keyframe >= anim->num_keyframes ||
+        (frame->duration != -1 && (player->anim_frame < frame->frame_number ||
+        player->anim_frame >= frame->frame_number + frame->duration )))) {
+        // frame is a regular frame, return
+
         player->anim_frame++;
 
-    // add to the keyframe if the next frame is above frme number + duration
-    if (player->anim_frame >= frame->frame_number + frame->duration && frame->duration != -1)
-        player->anim_keyframe++;
+        if (player->anim_frame >= anim->total_frames) { // reset if at end
+            player->anim_frame = 0;
+            player->anim_keyframe = 0;
+            player->current_animation = ANIM_NEUTRAL;
+        }
 
-    // reset if at end
-    if (player->anim_frame >= anim->total_frames && frame->duration != -1) {
-        player->anim_frame = 0;
-        player->anim_keyframe = 0;
-        player->current_animation = ANIM_NEUTRAL;
+        return;
     }
-    
 
+    #ifndef NDEBUG
+    if (player->anim_keyframe < anim->num_keyframes)
+    #endif
+        anim_process_actions(player, frame, input, last_input, hitboxes, num_hitboxes);
+
+    #ifndef NDEBUG
+    if (increment) {
+    #endif
+        // frame is a keyframe, increment both 
+        if (frame->duration != -1)
+            player->anim_frame++;
+
+        // add to the keyframe if the next frame is above frme number + duration
+        if (player->anim_frame >= frame->frame_number + frame->duration && frame->duration != -1)
+            player->anim_keyframe++;
+
+        // reset if at end
+        if (player->anim_frame >= anim->total_frames && frame->duration != -1) {
+            player->anim_frame = 0;
+            player->anim_keyframe = 0;
+            player->current_animation = ANIM_NEUTRAL;
+        }
+    #ifndef NDEBUG
+    }
+    #endif
 }
 
 void player_set_anim(player_t* player, animation_type_t anim, bool lockout) {
@@ -351,7 +367,11 @@ void player_attackupdate(player_t *player, input_t *input, input_t* last_input, 
             player->lockout_frames -= 1;
     }
 
-    anim_run_keyframe(player, input, last_input, player->animations[player->current_animation], hitboxes, hitboxes_len);
+    #ifndef NDEBUG
+    player_anim_run_keyframe(player, input, last_input, player->animations[player->current_animation], hitboxes, hitboxes_len, true);
+    #else
+    player_anim_run_keyframe(player, input, last_input, player->animations[player->current_animation], hitboxes, hitboxes_len);
+    #endif
     
 }
 
@@ -370,15 +390,21 @@ void player_dbg_newframe() {
     hurtboxes_len = 0;
 }
 
-void player_dbg_drawboxes(player_t* hitboxes, size_t hitboxes_len) {
+#define scaled_distance(value, middle, scale) (middle + (value - middle) * scale)
+
+void player_dbg_drawboxes(player_t* hitboxes, size_t hitboxes_len, uint8_t scale) {
     gfx_SetColor(COLOR_DBG_HITBOX);
     for (size_t i = 0; i < hitboxes_len; i++) {
         collider_t* col = &hitboxes[i].rb.col;
-        gfx_Rectangle(phy_box_left(col->box), phy_box_top(col->box), col->box.extent.x * 2, col->box.extent.y * 2);
+        gfx_Rectangle(scaled_distance(col->box.pos.x, 160, scale) - col->box.extent.x * scale, scaled_distance(col->box.pos.y, 120, scale) - col->box.extent.y * scale, col->box.extent.x * 2 * scale, col->box.extent.y * 2 * scale);
     }
     gfx_SetColor(COLOR_DBG_HURTBOX);
     for (size_t i = 0; i < hurtboxes_len; i++) {
-        gfx_Rectangle(phy_box_left(hurtboxes[i]), phy_box_top(hurtboxes[i]), hurtboxes[i].extent.x * 2, hurtboxes[i].extent.y * 2);
+        gfx_Rectangle(scaled_distance(hurtboxes[i].pos.x, 160, scale) - hurtboxes[i].extent.x * scale, scaled_distance(hurtboxes[i].pos.y, 120, scale) - hurtboxes[i].extent.y * scale, hurtboxes[i].extent.x * 2 * scale, hurtboxes[i].extent.y * 2 * scale);
     }
+}
+
+void player_dbg_draw_scaled(player_t *player, vec2_t *pos, uint8_t scale) {
+    gfx_ScaledTransparentSprite_NoClip(player->sprite, pos->x - (player->sprite->width / 2 + player->sprite_offset.x) * scale, pos->y - (player->sprite->height / 2 + player->sprite_offset.y) * scale, scale, scale);
 }
 #endif /* NDEBUG */

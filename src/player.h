@@ -79,6 +79,11 @@ void player_set_charac(player_t *player, player_char_t charac);
 void player_update(player_t *player, input_t *input, input_t* last_input, float dt);
 void player_lateupdate(player_t *player, input_t *input, input_t* last_input, float dt);
 void player_attackupdate(player_t *player, input_t *input, input_t* last_input, float dt, player_t* hitboxes, size_t hitboxes_len);
+#ifndef NDEBUG
+void player_anim_run_keyframe(player_t* player, input_t* input, input_t* last_input, animation_t* anim, player_t* hitboxes, int num_hitboxes, bool increment);
+#else
+void player_anim_run_keyframe(player_t* player, input_t* input, input_t* last_input, animation_t* anim, player_t* hitboxes, int num_hitboxes);
+#endif
 void player_draw(player_t *player);
 void player_draw_pos(player_t *player, vec2_t *pos);
 bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len);
@@ -87,7 +92,8 @@ void jump(player_t *player);
 
 #ifndef NDEBUG
 void player_dbg_newframe();
-void player_dbg_drawboxes(player_t* hitboxes, size_t hitboxes_len);
+void player_dbg_drawboxes(player_t* hitboxes, size_t hitboxes_len, uint8_t scale);
+void player_dbg_draw_scaled(player_t *player, vec2_t *pos, uint8_t scale);
 #endif /* NDEBUG */
 
 #endif /* PLAYER_H */

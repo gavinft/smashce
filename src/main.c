@@ -25,6 +25,9 @@ player_t players[MAX_PLAYERS];
 
 controller_state_t controller_state;
 
+#ifndef NDEBUG
+static void debug_mode();
+#endif
 static void begin();
 static void end();
 static bool step();
@@ -43,6 +46,11 @@ int main(void)
         gfx_SwapDraw(); // Queue the buffered frame to be displayed
         gfx_Wait();
         while (clock() < last_time + FRAME_TIME); // wait for end of frame
+
+        #ifndef NDEBUG
+        if (kb_IsDown(kb_Key0))
+            debug_mode();
+        #endif
     }
 
     gfx_End();
@@ -50,6 +58,156 @@ int main(void)
 
     return 0;
 }
+
+static int min(int first, int second) {
+    return first < second ? first : second;
+}
+
+#ifndef NDEBUG
+static void next_line() {
+    gfx_SetTextXY(5, gfx_GetTextY() + 10);
+}
+
+static void debug_mode() {
+    dbg_printf("debug_mode\n");
+
+    static bool playback = true;
+    static bool pressed_1 = false;
+    static bool pressed_2 = false;
+    static bool pressed_8 = false;
+    // static bool pressed_7 = false;
+    static bool pressed_left = false;
+    static bool pressed_right = false;
+    static player_t anim_player;
+    static input_t empty_input = {};
+    static vec2_t pos = {160, 120};
+    static animation_type_t current_anim = ANIM_NEUTRAL;
+    player_set_charac(&anim_player, PLAYER_LUIGI);
+    anim_player.rb.col.box.pos = (vec2_t) {160, 120};
+
+    while (!kb_IsDown(kb_KeyEnter)) {
+        kb_Scan();
+        last_time = clock();
+        bool increment = false;
+
+        if (pressed_1 && !kb_IsDown(kb_Key1)) {
+            pressed_1 = false;
+        } else if (!pressed_1 && kb_IsDown(kb_Key1)) {
+            pressed_1 = true;
+            if (playback)
+                playback = false;
+        }
+
+        if (pressed_2 && !kb_IsDown(kb_Key2)) {
+            pressed_2 = false;
+        } else if (!pressed_2 && kb_IsDown(kb_Key2)) {
+            pressed_2 = true;
+            if (!playback)
+                playback = true;
+        }
+
+        // increment frame when 8 pressed
+        if (!playback && pressed_8 && !kb_IsDown(kb_Key8)) {
+            pressed_8 = false;
+        } else if (!playback && !pressed_8 && kb_IsDown(kb_Key8)) {
+            pressed_8 = true;
+            increment = true;
+        }
+
+        // needs better implementation
+        /* if (!playback && pressed_7 && !kb_IsDown(kb_Key7)) {
+            pressed_7 = false;
+        } else if (!playback && !pressed_7 && kb_IsDown(kb_Key7)) {
+            pressed_7 = true;
+            anim_player.anim_frame -= 1;
+        } */
+
+        if (pressed_left && !kb_IsDown(kb_KeyLeft)) {
+            pressed_left = false;
+        } else if (!pressed_left && kb_IsDown(kb_KeyLeft)) {
+            pressed_left = true;
+            if (current_anim > 0) {
+                anim_player.current_animation -= 1;
+                anim_player.anim_frame = 0;
+                anim_player.anim_keyframe = 0;
+                current_anim -= 1;
+            }
+        }
+
+        if (pressed_right && !kb_IsDown(kb_KeyRight)) {
+            pressed_right = false;
+        } else if (!pressed_right && kb_IsDown(kb_KeyRight)) {
+            pressed_right = true;
+            if (current_anim < ANIM_SP_DWN) {
+                anim_player.current_animation += 1;
+                anim_player.anim_frame = 0;
+                anim_player.anim_keyframe = 0;
+                current_anim += 1;
+            }
+        }
+
+        if (playback)
+            increment = true;
+        
+        player_dbg_newframe();
+        player_anim_run_keyframe(&anim_player, &empty_input, &empty_input, anim_player.animations[anim_player.current_animation], NULL, 0, increment);
+        
+        increment = false;
+
+        if (anim_player.current_animation != current_anim) {
+            anim_player.current_animation = current_anim;
+            anim_player.anim_frame = 0;
+            anim_player.anim_keyframe = 0;
+        }
+
+        gfx_FillScreen(COLOR_BG);
+        player_dbg_draw_scaled(&anim_player, &pos, 3);
+        /* show hitboxes and hurtboxes */
+        player_dbg_drawboxes(&anim_player, 1, 3);
+        
+        // text
+        gfx_SetTextFGColor(COLOR_STAGE);
+        gfx_SetTextBGColor(COLOR_BG);
+        gfx_SetTextXY(5, 5);
+        if (kb_IsDown(kb_Key0)) {
+            gfx_PrintString("Press Enter to exit");
+            next_line();
+            if (playback) {
+                gfx_PrintString("Press 1 to pause animation");
+                next_line();
+            } else {
+                gfx_PrintString("Press 2 to resume frames");
+                next_line();
+                gfx_PrintString("Press 7 to decrement 1 frame");
+                next_line();
+                gfx_PrintString("Press 8 to increment 1 frame");
+                next_line();
+            }
+            next_line();
+            gfx_PrintString("Press right or left to switch animations");
+            next_line();
+        } else {
+            gfx_PrintString("Press 0 for help");
+            next_line();
+            if (playback) {
+                gfx_PrintString("Playback on");
+            } else {
+                gfx_PrintString("Playback off");
+            }
+            next_line();
+            gfx_PrintString("Current Frame: ");
+            gfx_PrintInt(anim_player.anim_frame, 2);
+            next_line();
+            gfx_PrintString("Current Anim: ");
+            gfx_PrintInt(current_anim, 2);
+        }
+
+        gfx_SwapDraw();
+        gfx_Wait();
+        while (clock() < last_time + FRAME_TIME); // wait for end of frame
+    }
+}
+#endif
 
 static void begin() {
     usb_Init(usb_event_handler, &controller_state, NULL, USB_DEFAULT_INIT_FLAGS);
@@ -74,10 +232,6 @@ static void begin() {
 
 static void end() {
     usb_Cleanup();
-}
-
-static int min(int first, int second) {
-    return first < second ? first : second;
 }
 
 usb_error_t err;
@@ -213,6 +367,6 @@ void draw() {
 
     #ifndef NDEBUG
     /* show hitboxes and hurtboxes */
-    player_dbg_drawboxes(players, min(controller_state.num_connected_controllers, MAX_PLAYERS));
+    player_dbg_drawboxes(players, min(controller_state.num_connected_controllers, MAX_PLAYERS), 1);
     #endif /* NDEBUG */
 }
