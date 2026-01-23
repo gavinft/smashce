@@ -1,0 +1,236 @@
+#include "player.h"
+#include <debug.h>
+/* ----- animation definitions ----- */
+
+#define same_dir(a, b) ((a < 0 && b < 0) || (a > 0 && b > 0))
+
+static void side_special_attack_update_direction(player_t *player, input_t *input) {
+    if (input->move.x > ATTACK_DIR_DEADZONE)
+        player->dir = DIR_RIGHT;
+    else if (input->move.x < ATTACK_DIR_DEADZONE)
+        player->dir = DIR_LEFT;
+    
+}
+
+bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last_input) {
+
+    // NORMAL ATTACK
+    if (input->attack && !last_input->attack && player->rb.grounded) {
+        player_set_anim(player, ANIM_ATTACK, true);
+        return true;
+    }
+
+    // SIDE AERIAL
+    if (input->attack && !last_input->attack &&
+        fabsf(input->move.x) > ATTACK_DIR_DEADZONE && !player->rb.grounded) {
+
+        if (same_dir(input->move.x, player->dir))
+            player_set_anim(player, ANIM_AIR_FWD, true);
+        else 
+            player_set_anim(player, ANIM_AIR_BCK, 10);
+
+        return true;
+    }
+
+    // SIDE SPECIAL
+    if (input->special && !last_input->special &&
+        fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
+        player_set_anim(player, ANIM_SP_SIDE, true);
+        side_special_attack_update_direction(player, input);
+        return true;
+    }
+
+    // UP SPECIAL
+    if (input->special && !last_input->special &&
+        input->move.y > ATTACK_DIR_DEADZONE) {
+        player_set_anim(player, ANIM_SP_UP, true);
+        return true;
+    }
+
+    if (player->rb.grounded) {
+        if (input->move.x < -TURN_DEADZONE)
+            player->dir = DIR_LEFT;
+        else if (input->move.x > TURN_DEADZONE)
+            player->dir = DIR_RIGHT;
+    }
+
+    return false;
+}
+
+// for use in every neutral anim
+#define ACTION_SCAN_INPUT (frame_data_t){ .type = FRAME_CUSTOM_FUNC, .data.custom_function = neutral_scan_attacks }
+
+
+// leaving ledge
+static bool try_leave_ledge(player_t *player, input_t *input, input_t *last_input) {
+    if (input->jump && !last_input->jump) {
+        jump(player);
+        player->grabbed_ledge = NULL;
+        dbg_printf("jumped out of ledge\n");
+        return true;
+    } else if (input->move.y < -ATTACK_DIR_DEADZONE && last_input->move.y >= -ATTACK_DIR_DEADZONE) {
+        player->grabbed_ledge = NULL;
+        player->can_grab_ledge = false;
+        dbg_printf("dropped ledge\n");
+        return true;
+    }
+    return false;
+}
+
+static bool ledge_check_leave(player_t* player, input_t* input, input_t* last_input) {
+    if (try_leave_ledge(player, input, last_input)) {
+        player_set_anim(player, ANIM_NEUTRAL, false);
+        return true;
+    }
+
+    return false;
+}
+
+// for use in every ledge grab anim
+#define ACTION_LEDGE_LEAVE (frame_data_t){ .type = FRAME_CUSTOM_FUNC, .data.custom_function = ledge_check_leave }
+
+
+/* luigi */
+
+frame_data_t l_neutral_kf0[] = {
+    ACTION_SCAN_INPUT, 
+    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) },
+    { .type = FRAME_SET_MAXFALL, .data.max_fall = 400 }
+};
+
+keyframe_t l_neutral_keyframes[] = { { .frame_number = 0, .duration = -1, .num_actions = 3, .frame_actions = l_neutral_kf0 } };
+
+animation_t luigi_neutral = {
+    .total_frames = 1,
+    .num_keyframes = 1,
+    .frames = l_neutral_keyframes
+};
+
+// //
+frame_data_t l_ledge_kf0[] = {
+    ACTION_LEDGE_LEAVE, 
+    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_lg) },
+};
+
+keyframe_t l_ledge_keyframes[] = { { .frame_number = 0, .duration = -1, .num_actions = 2, .frame_actions = l_ledge_kf0 } };
+
+animation_t luigi_ledge_grab = {
+    .total_frames = 1,
+    .num_keyframes = 1,
+    .frames = l_ledge_keyframes
+};
+
+// //
+void luigi_missile_hit(player_t* p) {
+    p->anim_frame += 4;
+    p->rb.vel = (vec2_t){ 0 };
+}
+
+frame_data_t l_missile_kf0[] = {
+    { .type = FRAME_SET_VELOCITY, .data.player_velocity = { 0 } },
+    { .type = FRAME_SET_MAXFALL, .data.max_fall = 20 },
+    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_ssp) }
+};
+frame_data_t l_missile_kf1[] = {
+    { .type = FRAME_SET_VELOCITY, .data.player_velocity = { 400, 0 } },
+    { .type = FRAME_SET_MAXFALL, .data.max_fall = 80 }
+};
+frame_data_t l_missile_kf2[] = {
+    { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = luigi_missile_hit,
+        .box = {.extent = {11, 5}, .pos = { 0 }}, .damage = 12, .kb = { 10000, 200 }}},
+};
+
+keyframe_t l_missile_keyframes[] = {
+    { .frame_number = 0, .duration = 1, .num_actions = 3, .frame_actions = l_missile_kf0 },
+    { .frame_number = 9, .duration = 1, .num_actions = 2, .frame_actions = l_missile_kf1 },
+    { .frame_number = 10, .duration = 15, .num_actions = 1, .frame_actions = l_missile_kf2 },
+};
+
+animation_t luigi_missile = {
+    .total_frames = 30,
+    .num_keyframes = 3,
+    .frames = l_missile_keyframes
+};
+
+// //
+// frame_data_t l_jab_kf0[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_att) }; }
+frame_data_t l_jab_kf1[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_att) } };
+frame_data_t l_jab_kf2[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
+        .box = {.extent = {8, 4}, .pos = { 9, 0 }}, .damage = 2, .kb = { 300, -50 }} } };
+
+
+keyframe_t l_jab_keyframes[] = {
+    { .frame_number = 3, .duration = 1, .num_actions = 1, .frame_actions = l_jab_kf1 },
+    { .frame_number = 4, .duration = 4, .num_actions = 1, .frame_actions = l_jab_kf2 }
+};
+
+animation_t luigi_jab = {
+    .total_frames = 10,
+    .num_keyframes = 2,
+    .frames = l_jab_keyframes
+};
+
+// //
+frame_data_t l_fair_kf0[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_fair) } };
+frame_data_t l_fair_kf1[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
+        .box = {.extent = {6, 6}, .pos = { 6, -6 }}, .damage = 9, .kb = { 300, 400 }} } };
+
+keyframe_t l_fair_keyframes[] = {
+    { .frame_number = 4, .duration = 1, .num_actions = 1, .frame_actions = l_fair_kf0 },
+    { .frame_number = 5, .duration = 2, .num_actions = 1, .frame_actions = l_fair_kf1 }
+};
+
+animation_t luigi_forward_air = {
+    .total_frames = 16, 
+    .num_keyframes = 2,
+    .frames = l_fair_keyframes
+};
+
+// //
+frame_data_t l_bair_kf0[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_bair) } };
+frame_data_t l_bair_kf1[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
+        .box = {.extent = {8, 6}, .pos = { -6, 3 }}, .damage = 8, .kb = { -2000, 100 }} } };
+
+
+keyframe_t l_bair_keyframes[] = {
+    { .frame_number = 3, .duration = 1, .num_actions = 1, .frame_actions = l_bair_kf0 },
+    { .frame_number = 4, .duration = 5, .num_actions = 1, .frame_actions = l_bair_kf1 }
+};
+
+animation_t luigi_back_air = {
+    .total_frames = 14,
+    .num_keyframes = 2,
+    .frames = l_bair_keyframes
+};
+
+// //
+frame_data_t l_upsp_kf0[] = {
+    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_usp) },
+    { .type = FRAME_SET_VELOCITY, .data.player_velocity = (vec2_t){ 0, -400 } }
+};
+frame_data_t l_upsp_kf1[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
+        .box = {.extent = {6, 10}, .pos = { 6, -3 }}, .damage = 12, .kb = { 200, -3000 }} } };
+frame_data_t l_upsp_kf2[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) } };
+
+keyframe_t l_upsp_keyframes[] = {
+    { .frame_number = 3, .duration = 1, .num_actions = 2, .frame_actions = l_upsp_kf0 },
+    { .frame_number = 4, .duration = 8, .num_actions = 1, .frame_actions = l_upsp_kf1 },
+    { .frame_number = 15, .duration = 1, .num_actions = 1, .frame_actions = l_upsp_kf2 }
+};
+
+animation_t luigi_up_special = {
+    .total_frames = 25,
+    .num_keyframes = 3,
+    .frames = l_upsp_keyframes
+};
+
+animation_t* luigi_animations[] = {
+    &luigi_neutral, &luigi_ledge_grab, &luigi_jab,
+    NULL, &luigi_forward_air, &luigi_back_air,
+    NULL, NULL, NULL, 
+    &luigi_missile, &luigi_up_special, NULL
+};
+
+
+
+

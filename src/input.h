@@ -6,7 +6,7 @@
 #include "vec.h"
 #include "controller.h"
 
-typedef struct {
+typedef struct input {
     vec2_t move;
     bool jump;
     bool attack;

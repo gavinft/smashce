@@ -11,15 +11,8 @@ box_t hurtboxes[HURTBOXES_MAX];
 size_t hurtboxes_len;
 #endif /* NDEBUG */
 
-#define TURN_DEADZONE (0.1f)
-#define ATTACK_DIR_DEADZONE (0.1f)
-
 #define ATTACK_PERCENT_SCALE (100)
 
-#define flippable_duplicate(name) gfx_UninitedSprite(name ## _l, name ## _r_width, name ## _r_height)
-#define flip(name) gfx_FlipSpriteY(name ## _r, name ## _l)
-
-// reversed characters
 flippable_duplicate(oiram_neu);
 flippable_duplicate(mario_neu);
 
@@ -27,16 +20,22 @@ flippable_duplicate(luigi_neu);
 flippable_duplicate(luigi_att);
 flippable_duplicate(luigi_ssp);
 flippable_duplicate(luigi_lg);
-
+flippable_duplicate(luigi_fair);
+flippable_duplicate(luigi_bair);
+flippable_duplicate(luigi_usp);
 
 void player_load_sprites() {
     flip(oiram_neu);
     flip(mario_neu);
 
     flip(luigi_neu);
+
     flip(luigi_att);
     flip(luigi_ssp);
     flip(luigi_lg);
+    flip(luigi_fair);
+    flip(luigi_bair);
+    flip(luigi_usp);
 }
 
 void player_set_charac(player_t *player, player_char_t charac) {
@@ -55,6 +54,10 @@ void player_set_charac(player_t *player, player_char_t charac) {
                     .inv_mass = 1 / 2.0f,
                     .max_fall = 400
                 },
+                // TESTING
+                .animations = luigi_animations,
+                .current_animation = ANIM_NEUTRAL,
+
                 .charac = PLAYER_OIRAM,
                 .dir = DIR_RIGHT,
                 .sprite = oiram_neu_r,
@@ -80,6 +83,10 @@ void player_set_charac(player_t *player, player_char_t charac) {
                     .inv_mass = 1 / 2.0f,
                     .max_fall = 400
                 },
+                // TESTING
+                .animations = luigi_animations,
+                .current_animation = ANIM_NEUTRAL,
+
                 .charac = PLAYER_MARIO,
                 .sprite = mario_neu_r,
                 .dir = DIR_RIGHT,
@@ -105,6 +112,9 @@ void player_set_charac(player_t *player, player_char_t charac) {
                     .inv_mass = 1 / 2.0f,
                     .max_fall = 400
                 },
+                .animations = luigi_animations,
+                .current_animation = ANIM_NEUTRAL,
+
                 .charac = PLAYER_LUIGI,
                 .sprite = luigi_neu_r,
                 .dir = DIR_RIGHT,
@@ -118,7 +128,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
     }
 }
 
-static void jump(player_t *player) {
+void jump(player_t *player) {
     player->rb.vel.y = player->jump_vel;
     player->can_grab_ledge = true;
     if (player->rb.grounded || player->grabbed_ledge)
@@ -170,8 +180,7 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
                 
                 // we can grab the ledge
                 player->grabbed_ledge = ledge;
-                player->animation = -1; // ledgegrab animation
-                player->anim_frame = -1;
+                player_set_anim(player, ANIM_LEDGE_GRAB, false);
                 dbg_printf("grabbed ledge\n");
             }
         }
@@ -202,15 +211,7 @@ void player_lateupdate(player_t *player, input_t *input, input_t* last_input, fl
     }
 }
 
-static void side_special_attack_update_direction(player_t *player, input_t *input) {
-    if (input->move.x > ATTACK_DIR_DEADZONE) {
-        player->dir = DIR_RIGHT;
-    } else if (input->move.x < ATTACK_DIR_DEADZONE) {
-        player->dir = DIR_LEFT;
-    }
-}
-
-static bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len) {
+bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len) {
     #ifndef NDEBUG
     if (hurtboxes_len < HURTBOXES_MAX) {
         hurtboxes[hurtboxes_len++] = *box;
@@ -218,7 +219,7 @@ static bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player
     #endif /* NDEBUG */
 
     bool hit = false;
-
+    
     for (size_t i = 0; i < hitboxes_len; i++) {
         collider_t *hitbox = &hitboxes[i].rb.col;
         if (phy_box_overlap(*box, hitbox->box)) {
@@ -229,6 +230,8 @@ static bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player
 
             float base_kb = ATTACK_PERCENT_SCALE * (hitboxes[i].damage_percent + 10);
             vec2_t total_kb = vec_AddMagnitude(*kb, base_kb);
+            // this is not great, maybe option to not have it
+            total_kb.x *= player->dir;
 
             phy_add_force(&hitboxes[i].rb, total_kb);
             
@@ -239,180 +242,102 @@ static bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player
     return hit;
 }
 
-static bool try_leave_ledge(player_t *player, input_t *input, input_t *last_input) {
-    if (input->jump && !last_input->jump) {
-        jump(player);
-        player->grabbed_ledge = NULL;
-        dbg_printf("jumped out of ledge\n");
-        return true;
-    } else if (input->move.y < -ATTACK_DIR_DEADZONE && last_input->move.y >= -ATTACK_DIR_DEADZONE) {
-        player->grabbed_ledge = NULL;
-        player->can_grab_ledge = false;
-        dbg_printf("dropped ledge\n");
-        return true;
+
+void anim_run_keyframe(player_t* player, input_t* input, input_t* last_input, animation_t* anim, player_t* hitboxes, int num_hitboxes) {
+
+    // get the next keyframe
+    // this could probably totally access out of bounds memory but ill only worry about that if it becomes a problem
+    keyframe_t* frame = &anim->frames[player->anim_keyframe];
+
+    // check if the keyframe is the current frame
+    if (frame->duration != -1 &&
+        (player->anim_frame < frame->frame_number ||
+        player->anim_frame >= frame->frame_number + frame->duration ||
+        player->anim_keyframe >= anim->num_keyframes)) {
+        // frame is a regular frame, return
+
+        player->anim_frame++;
+
+        if (player->anim_frame >= anim->total_frames) { // reset if at end
+            player->anim_frame = 0;
+            player->anim_keyframe = 0;
+            player->current_animation = ANIM_NEUTRAL;
+        }
+
+        return;
     }
-    return false;
-}
 
-static void oiram_au(player_t *player, input_t *input, input_t *last_input, float dt, player_t* hitboxes, size_t hitboxes_len, bool is_mario) {
-    enum {
-        ANIM_LEDGE = -1,
-        ANIM_DEFAULT,
-        ANIM_JAB,
-    };
+    // run all the things that happen in this keyframe
+    for (int i = 0; i < frame->num_actions; i++) {
+        frame_data_t* action = frame->frame_actions + i;
 
-    switch (player->animation) {
-        case ANIM_DEFAULT:
-            player->sprite = is_mario ? player_spr(mario_neu, player->dir) : player_spr(oiram_neu, player->dir);
-            if (input->attack && !last_input->attack) {
-                player->animation = ANIM_JAB;
-                player->state = PLAYER_STATE_LOCKOUT;
-                player->lockout_frames = 10;
-                player->anim_frame = -1;
+        switch (action->type) {
+            case FRAME_CUSTOM_FUNC:
+                if (action->data.custom_function(player, input, last_input))
+                    return;
                 break;
-            }
-            if (player->rb.grounded) {
-                if (input->move.x < -TURN_DEADZONE)
-                    player->dir = DIR_LEFT;
-                else if (input->move.x > TURN_DEADZONE)
-                    player->dir = DIR_RIGHT;
-            }
-            break;
-        case ANIM_LEDGE:
-            player->sprite = is_mario ? player_spr(mario_neu, player->dir) : player_spr(oiram_neu, player->dir);
-            // leaving ledge
-            if (try_leave_ledge(player, input, last_input)) {
-                player->animation = ANIM_DEFAULT;
-                player->anim_frame = 0;
-            }
-            break;
-        case ANIM_JAB:
-            player->anim_frame += 1;
-            switch (player->anim_frame) {
-                case 0:
-                    player->sprite = is_mario ? player_spr(mario_neu, player->dir) : player_spr(oiram_neu, player->dir);
-                case 1: case 2:
-                    break;
-                case 3: case 4: case 5: case 6: case 7:
-                    hurtbox(player, 
-                        &(box_t){.pos = {player->rb.col.box.pos.x + 9 * player->dir, player->rb.col.box.pos.y}, .extent = {4, 4}},
-                        &(vec2_t){player->dir * 300, -50}, 1, hitboxes, hitboxes_len);
-                    break;
-                case 8: case 9:
-                    break;
-                case 10:
-                    player->animation = ANIM_DEFAULT;
-                    break;
-            }
-            break;
-    }
-}
-
-static void luigi_au(player_t *player, input_t *input, input_t *last_input, float dt, player_t* hitboxes, size_t hitboxes_len) {
-    enum {
-        ANIM_LEDGE = -1,
-        ANIM_DEFAULT,
-        ANIM_JAB,
-        ANIM_MISSILE,
-    };
-
-    switch (player->animation) {
-        case ANIM_DEFAULT:
-            player->sprite = player_spr(luigi_neu, player->dir);
-            player->sprite_offset = (vec2_t) {0};
-            player->rb.max_fall = 400;
-            if (input->attack && !last_input->attack) {
-                player->animation = ANIM_JAB;
-                player->state = PLAYER_STATE_LOCKOUT;
-                player->lockout_frames = 10;
-                player->anim_frame = -1;
+            case FRAME_HURTBOX:
+                (void)0;
+                vec2_t pos = {
+                    player->rb.col.box.pos.x + action->data.hurtbox.box.pos.x * player->dir,
+                    player->rb.col.box.pos.y + action->data.hurtbox.box.pos.y
+                };
+                if (hurtbox(player, &(box_t){.pos = pos, .extent = action->data.hurtbox.box.extent },
+                    &action->data.hurtbox.kb, action->data.hurtbox.damage, hitboxes, num_hitboxes)
+                    && action->data.hurtbox.on_hit != NULL)
+                    action->data.hurtbox.on_hit(player);
                 break;
-            }
-            if (input->special && !last_input->special
-                && fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
-                player->animation = ANIM_MISSILE;
-                player->state = PLAYER_STATE_LOCKOUT;
-                player->lockout_frames = 10;
-                player->anim_frame = -1;
-                side_special_attack_update_direction(player, input);
-            }
-
-            if (player->rb.grounded) {
-                if (input->move.x < -TURN_DEADZONE)
-                    player->dir = DIR_LEFT;
-                else if (input->move.x > TURN_DEADZONE)
-                    player->dir = DIR_RIGHT;
-            }
-            break;
-        case ANIM_LEDGE:
-            // lateupdate returns to ledge
-            // ledge sprite
-            player->sprite = player_spr(luigi_lg, player->dir);
-            // leaving ledge
-            if (try_leave_ledge(player, input, last_input)) {
-                player->animation = ANIM_DEFAULT;
+            case FRAME_SET_VELOCITY:
+                // TODO: direction weird
+                player->rb.vel.x = action->data.player_velocity.x * player->dir;
+                player->rb.vel.y = action->data.player_velocity.y;
+                break;
+            case FRAME_SET_MAXFALL:
+                player->rb.max_fall = action->data.max_fall;
+                break;
+            case FRAME_SET_ANIMATION:
+                player->current_animation = action->data.next_anim;
                 player->anim_frame = 0;
-            }
-            break;
-        case ANIM_JAB:
-            player->anim_frame += 1;
-            switch (player->anim_frame) {
-                case 0:
-                    player->sprite = player_spr(luigi_neu, player->dir);
-                case 1: case 2:
-                    break;
-                case 3:
-                    player->sprite = player_spr(luigi_att, player->dir);
-                    player->sprite_offset = (vec2_t) {player->dir * 3, 0};
-                    break;
-                case 4: case 5: case 6: case 7:
-                    hurtbox(player,
-                        &(box_t){.pos = {player->rb.col.box.pos.x + 15 * player->dir, player->rb.col.box.pos.y}, .extent = {11, 5}},
-                        &(vec2_t){player->dir * 300, -50}, 1, hitboxes, hitboxes_len);
-                    break;
-                case 8: case 9:
-                    break;
-                case 10:
-                    player->animation = ANIM_DEFAULT;
-                    break;
-            }
-            break;
+                player->anim_keyframe = 0;
+                return; // return because animation has changed
+            case FRAME_SET_SPRITE:
+                player->sprite = player->dir > 0 ? action->data.sprite.right : action->data.sprite.left;
+                break;
+        }
 
-        case ANIM_MISSILE:
-            player->anim_frame += 1;
-            switch (player->anim_frame) {
-                case 0:
-                    player->rb.vel = (vec2_t){ 0 };
-                    // TODO: change player collider
-                    player->sprite = player_spr(luigi_ssp, player->dir);
-                    player->rb.max_fall = 20;
-                case 1: case 2: case 3: case 4: case 5: case 6: case 7: case 8:
-                    break;
-                case 9:
-                    player->rb.vel.x = player->dir * player->max_speed * 3;
-                    player->rb.max_fall = 80;
-                    break;
-                case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23: case 24: case 25:
-                    (void)0;
-                    bool hit = hurtbox(player,
-                        &(box_t){.pos = {player->rb.col.box.pos.x, player->rb.col.box.pos.y}, .extent = {11, 5}},
-                        &(vec2_t){player->dir * 10000, 200}, 10, hitboxes, hitboxes_len);
-                    
-                    if (hit) {
-                        player->anim_frame += 3;
-                        // TODO: lockout framse
-                        player->rb.vel = (vec2_t){ 0 };
-                    }
-                    break;
-                case 26: case 27: case 28:
-                    break;
-                case 29:
-                    player->animation = ANIM_DEFAULT;
-                    break;
-            }
-            break;
     }
+
+    // frame is a keyframe, increment both 
+    if (frame->duration != -1)
+        player->anim_frame++;
+
+    // add to the keyframe if the next frame is above frme number + duration
+    if (player->anim_frame >= frame->frame_number + frame->duration && frame->duration != -1)
+        player->anim_keyframe++;
+
+    // reset if at end
+    if (player->anim_frame >= anim->total_frames && frame->duration != -1) {
+        player->anim_frame = 0;
+        player->anim_keyframe = 0;
+        player->current_animation = ANIM_NEUTRAL;
+    }
+    
+
 }
+
+void player_set_anim(player_t* player, animation_type_t anim, bool lockout) {
+    player->current_animation = anim;
+
+    if (lockout) {
+        player->state = PLAYER_STATE_LOCKOUT;
+        player->lockout_frames = player->animations[anim]->total_frames;
+    } else 
+        player->lockout_frames = 0;
+
+    player->anim_frame = 0;
+    player->anim_keyframe = 0;
+}
+
 
 void player_attackupdate(player_t *player, input_t *input, input_t* last_input, float dt, player_t* hitboxes, size_t hitboxes_len) {\
 
@@ -423,18 +348,7 @@ void player_attackupdate(player_t *player, input_t *input, input_t* last_input, 
             player->lockout_frames -= 1;
     }
 
-    switch (player->charac) {
-        case PLAYER_OIRAM:
-            oiram_au(player, input, last_input, dt, hitboxes, hitboxes_len, false);
-            break;
-        case PLAYER_MARIO:
-            oiram_au(player, input, last_input, dt, hitboxes, hitboxes_len, true);
-            break;
-        case PLAYER_LUIGI:
-            luigi_au(player, input, last_input, dt, hitboxes, hitboxes_len);
-            break;
-
-    }
+    anim_run_keyframe(player, input, last_input, player->animations[player->current_animation], hitboxes, hitboxes_len);
     
 }
 
