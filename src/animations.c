@@ -32,6 +32,13 @@ bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last_input)
         return true;
     }
 
+    // UP AERIAL
+    if (input->attack && !last_input->attack &&
+        input->move.y > ATTACK_DIR_DEADZONE && !player->rb.grounded) {
+        player_set_anim(player, ANIM_AIR_UP, 10);
+        return true;
+    }
+
     // SIDE SPECIAL
     if (input->special && !last_input->special &&
         fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
@@ -224,10 +231,30 @@ animation_t luigi_up_special = {
     .frames = l_upsp_keyframes
 };
 
+// //
+frame_data_t l_uair_kf0[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_uair) } };
+frame_data_t l_uair_kf1[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
+        .box = {.extent = {10, 5}, .pos = { 0, -10 }}, .damage = 9, .kb = { 1000, -1000 }} } };
+frame_data_t l_uair_kf2[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) } };
+
+
+
+keyframe_t l_uair_keyframes[] = {
+    { .frame_number = 2, .duration = 1, .num_actions = 1, .frame_actions = l_uair_kf0 },
+    { .frame_number = 3, .duration = 2, .num_actions = 1, .frame_actions = l_uair_kf1 },
+    { .frame_number = 8, .duration = 1, .num_actions = 1, .frame_actions = l_uair_kf2 }
+};
+
+animation_t luigi_up_air = {
+    .total_frames = 16,
+    .num_keyframes = 3,
+    .frames = l_uair_keyframes
+};
+
 animation_t* luigi_animations[] = {
     &luigi_neutral, &luigi_ledge_grab, &luigi_jab,
     NULL, &luigi_forward_air, &luigi_back_air,
-    NULL, NULL, NULL, 
+    &luigi_up_air, NULL, NULL, 
     &luigi_missile, &luigi_up_special, NULL
 };
 
