@@ -314,20 +314,21 @@ frame_data_t l_dsp_kf1[] = {
 frame_data_t l_dsp_kf2[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) } };
 frame_data_t l_dsp_kf3[] = {
     { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL, .box = {.extent = {8, 4}, .pos = { 4, 16 }}, .damage = 10, .kb = { 1200, 600 }} },
-    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) }
+    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_dsp) }
 };
-
+frame_data_t l_dsp_kf4[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) } };
 
 keyframe_t l_dsp_keyframes[] = {
     { .frame_number = 3, .duration = 1, .num_actions = 1, .frame_actions = l_dsp_kf0 },
     { .frame_number = 4, .duration = 14, .num_actions = 2, .frame_actions = l_dsp_kf1 },
     { .frame_number = 18, .duration = 1, .num_actions = 1, .frame_actions = l_dsp_kf2 },
-    { .frame_number = 30, .duration = 1, .num_actions = 2, .frame_actions = l_dsp_kf3 }
+    { .frame_number = 30, .duration = 2, .num_actions = 2, .frame_actions = l_dsp_kf3 },
+    { .frame_number = 34, .duration = 1, .num_actions = 1, .frame_actions = l_dsp_kf4 },
 };
 
 animation_t luigi_down_special = {
     .total_frames = 40,
-    .num_keyframes = 2,
+    .num_keyframes = 5,
     .frames = l_dsp_keyframes
 };
 
@@ -337,7 +338,4 @@ animation_t* luigi_animations[] = {
     &luigi_up_air, &luigi_down_air, NULL, 
     &luigi_missile, &luigi_up_special, &luigi_down_special
 };
-
-
-
 
