@@ -130,6 +130,7 @@ static bool step() {
 }
 
 #define draw_box(box) (gfx_Rectangle(phy_box_left(box), phy_box_top(box), box.extent.x * 2, box.extent.y * 2))
+#define fill_box(box) (gfx_FillRectangle(phy_box_left(box), phy_box_top(box), box.extent.x * 2, box.extent.y * 2))
 
 void draw() {
     /* Initialize graphics drawing */
@@ -177,11 +178,18 @@ void draw() {
     // draw out of bounds players
     for (size_t i = 0; i < oob_players_len; i++) {
         #define OOB_WINDOW_OFFSET (3)
-        box_t window = {oob_players[i]->rb.col.box.pos, {30, 20}};
+        box_t window = {oob_players[i]->rb.col.box.pos, {30, 25}};
+        float distance = 0;
         
         if (phy_box_left(oob_players[i]->rb.col.box) > phy_box_right(screen)) {
+            float distance = phy_box_left(oob_players[i]->rb.col.box) - phy_box_right(screen);
+            window.extent.x -= fminf(distance / 4, 10);
+            window.extent.y -= fminf(distance / 4, 10);
             window.pos.x = phy_box_right(screen) - OOB_WINDOW_OFFSET - window.extent.x;
         } else if (phy_box_right(oob_players[i]->rb.col.box) < phy_box_left(screen)) {
+            float distance = phy_box_left(screen) - phy_box_right(oob_players[i]->rb.col.box);
+            window.extent.x -= fminf(distance / 4, 10);
+            window.extent.y -= fminf(distance / 4, 10);
             window.pos.x = phy_box_left(screen) + OOB_WINDOW_OFFSET + window.extent.x;
         }
 
@@ -191,6 +199,8 @@ void draw() {
             window.pos.y = phy_box_top(screen) + OOB_WINDOW_OFFSET + window.extent.y;
         }
 
+        gfx_SetColor(COLOR_BG);
+        fill_box(window);
         gfx_SetColor(COLOR_DBG_HITBOX);
         draw_box(window);
         player_draw_pos(oob_players[i], &window.pos);
