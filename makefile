@@ -13,3 +13,8 @@ CXXFLAGS = -Wall -Wextra -Oz -Werror=return-type -Werror=implicit-function-decla
 # ----------------------------
 
 include $(shell cedev-config --makefile)
+
+.PHONY: gfxclean
+
+gfxclean:
+	cd $(GFXDIR) && $(CONVIMG) -c
