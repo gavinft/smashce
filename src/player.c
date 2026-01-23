@@ -24,6 +24,7 @@ flippable_duplicate(luigi_fair);
 flippable_duplicate(luigi_bair);
 flippable_duplicate(luigi_usp);
 flippable_duplicate(luigi_uair);
+flippable_duplicate(luigi_dair);
 
 
 void player_load_sprites() {
@@ -39,6 +40,7 @@ void player_load_sprites() {
     flip(luigi_bair);
     flip(luigi_usp);
     flip(luigi_uair);
+    flip(luigi_dair);
 }
 
 void player_set_charac(player_t *player, player_char_t charac) {

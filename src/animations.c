@@ -4,6 +4,7 @@
 
 #define same_dir(a, b) ((a < 0 && b < 0) || (a > 0 && b > 0))
 
+
 static void side_special_attack_update_direction(player_t *player, input_t *input) {
     if (input->move.x > ATTACK_DIR_DEADZONE)
         player->dir = DIR_RIGHT;
@@ -20,39 +21,46 @@ bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last_input)
         return true;
     }
 
-    // SIDE AERIAL
-    if (input->attack && !last_input->attack &&
-        fabsf(input->move.x) > ATTACK_DIR_DEADZONE && !player->rb.grounded) {
+    // AERIAL
+    if (input->attack && !last_input->attack && !player->rb.grounded) {
 
-        if (same_dir(input->move.x, player->dir))
-            player_set_anim(player, ANIM_AIR_FWD, true);
-        else 
-            player_set_anim(player, ANIM_AIR_BCK, 10);
+        // SIDE
+        if (fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
+            if (same_dir(input->move.x, player->dir))
+                player_set_anim(player, ANIM_AIR_FWD, true);
+            else 
+                player_set_anim(player, ANIM_AIR_BCK, 10);
+        }
+
+        // UP
+        else if (input->move.y > ATTACK_DIR_DEADZONE)
+            player_set_anim(player, ANIM_AIR_UP, 10);
+
+        // DOWN
+        else if (input->move.y < -ATTACK_DIR_DEADZONE)
+            player_set_anim(player, ANIM_AIR_DWN, 10);
+
 
         return true;
     }
 
-    // UP AERIAL
-    if (input->attack && !last_input->attack &&
-        input->move.y > ATTACK_DIR_DEADZONE && !player->rb.grounded) {
-        player_set_anim(player, ANIM_AIR_UP, 10);
+
+    // SPECIAL
+    if (input->special && !last_input->special) {
+
+        // SIDE
+        if (fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
+            player_set_anim(player, ANIM_SP_SIDE, true);
+            side_special_attack_update_direction(player, input);
+        }
+
+        // UP
+        else if (input->move.y > ATTACK_DIR_DEADZONE)
+            player_set_anim(player, ANIM_SP_UP, true);
+        
         return true;
     }
 
-    // SIDE SPECIAL
-    if (input->special && !last_input->special &&
-        fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
-        player_set_anim(player, ANIM_SP_SIDE, true);
-        side_special_attack_update_direction(player, input);
-        return true;
-    }
-
-    // UP SPECIAL
-    if (input->special && !last_input->special &&
-        input->move.y > ATTACK_DIR_DEADZONE) {
-        player_set_anim(player, ANIM_SP_UP, true);
-        return true;
-    }
 
     if (player->rb.grounded) {
         if (input->move.x < -TURN_DEADZONE)
@@ -237,8 +245,6 @@ frame_data_t l_uair_kf1[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit
         .box = {.extent = {10, 5}, .pos = { 0, -10 }}, .damage = 9, .kb = { 1000, -1000 }} } };
 frame_data_t l_uair_kf2[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) } };
 
-
-
 keyframe_t l_uair_keyframes[] = {
     { .frame_number = 2, .duration = 1, .num_actions = 1, .frame_actions = l_uair_kf0 },
     { .frame_number = 3, .duration = 2, .num_actions = 1, .frame_actions = l_uair_kf1 },
@@ -251,10 +257,27 @@ animation_t luigi_up_air = {
     .frames = l_uair_keyframes
 };
 
+// //
+frame_data_t l_dair_kf0[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_dair) } };
+frame_data_t l_dair_kf1[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
+        .box = {.extent = {5, 8}, .pos = { 4, 16 }}, .damage = 10, .kb = { 300, 2000 }} } };
+
+
+keyframe_t l_dair_keyframes[] = {
+    { .frame_number = 4, .duration = 1, .num_actions = 1, .frame_actions = l_dair_kf0 },
+    { .frame_number = 5, .duration = 3, .num_actions = 1, .frame_actions = l_dair_kf1 }
+};
+
+animation_t luigi_down_air = {
+    .total_frames = 16,
+    .num_keyframes = 2,
+    .frames = l_dair_keyframes
+};
+
 animation_t* luigi_animations[] = {
     &luigi_neutral, &luigi_ledge_grab, &luigi_jab,
     NULL, &luigi_forward_air, &luigi_back_air,
-    &luigi_up_air, NULL, NULL, 
+    &luigi_up_air, &luigi_down_air, NULL, 
     &luigi_missile, &luigi_up_special, NULL
 };
 
