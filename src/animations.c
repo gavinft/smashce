@@ -26,8 +26,8 @@ bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last_input)
 
         if (same_dir(input->move.x, player->dir))
             player_set_anim(player, ANIM_AIR_FWD, true);
-        // else 
-        //     player_set_anim(player, ANIM_AIR_BCK, 10);
+        else 
+            player_set_anim(player, ANIM_AIR_BCK, 10);
 
         return true;
     }
@@ -37,6 +37,13 @@ bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last_input)
         fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
         player_set_anim(player, ANIM_SP_SIDE, true);
         side_special_attack_update_direction(player, input);
+        return true;
+    }
+
+    // UP SPECIAL
+    if (input->special && !last_input->special &&
+        input->move.y > ATTACK_DIR_DEADZONE) {
+        player_set_anim(player, ANIM_SP_UP, true);
         return true;
     }
 
@@ -179,8 +186,50 @@ animation_t luigi_forward_air = {
     .frames = l_fair_keyframes
 };
 
+// //
+frame_data_t l_bair_kf0[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_bair) } };
+frame_data_t l_bair_kf1[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
+        .box = {.extent = {8, 6}, .pos = { -6, 3 }}, .damage = 8, .kb = { -2000, 100 }} } };
 
-animation_t* luigi_animations[] = { &luigi_neutral, &luigi_ledge_grab, &luigi_jab, NULL, &luigi_forward_air, NULL, NULL, NULL, NULL, &luigi_missile, NULL, NULL, NULL };
+
+keyframe_t l_bair_keyframes[] = {
+    { .frame_number = 3, .duration = 1, .num_actions = 1, .frame_actions = l_bair_kf0 },
+    { .frame_number = 4, .duration = 5, .num_actions = 1, .frame_actions = l_bair_kf1 }
+};
+
+animation_t luigi_back_air = {
+    .total_frames = 14,
+    .num_keyframes = 2,
+    .frames = l_bair_keyframes
+};
+
+// //
+frame_data_t l_upsp_kf0[] = {
+    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_usp) },
+    { .type = FRAME_SET_VELOCITY, .data.player_velocity = (vec2_t){ 0, -400 } }
+};
+frame_data_t l_upsp_kf1[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
+        .box = {.extent = {6, 10}, .pos = { 6, -3 }}, .damage = 12, .kb = { 200, -3000 }} } };
+frame_data_t l_upsp_kf2[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) } };
+
+keyframe_t l_upsp_keyframes[] = {
+    { .frame_number = 3, .duration = 1, .num_actions = 2, .frame_actions = l_upsp_kf0 },
+    { .frame_number = 4, .duration = 8, .num_actions = 1, .frame_actions = l_upsp_kf1 },
+    { .frame_number = 15, .duration = 1, .num_actions = 1, .frame_actions = l_upsp_kf2 }
+};
+
+animation_t luigi_up_special = {
+    .total_frames = 25,
+    .num_keyframes = 3,
+    .frames = l_upsp_keyframes
+};
+
+animation_t* luigi_animations[] = {
+    &luigi_neutral, &luigi_ledge_grab, &luigi_jab,
+    NULL, &luigi_forward_air, &luigi_back_air,
+    NULL, NULL, NULL, 
+    &luigi_missile, &luigi_up_special, NULL
+};
 
 
 
