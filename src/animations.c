@@ -13,7 +13,7 @@ static void side_special_attack_update_direction(player_t *player, input_t *inpu
     
 }
 
-bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last_input) {
+static bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last_input) {
 
     // NORMAL ATTACK
     if (input->attack && !last_input->attack && player->rb.grounded) {
@@ -27,18 +27,22 @@ bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last_input)
         // SIDE
         if (fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
             if (same_dir(input->move.x, player->dir))
-                player_set_anim(player, ANIM_AIR_FWD, true);
+                player_set_anim(player, ANIM_AIR_FWD, false);
             else 
-                player_set_anim(player, ANIM_AIR_BCK, 10);
+                player_set_anim(player, ANIM_AIR_BCK, false);
         }
 
         // UP
         else if (input->move.y > ATTACK_DIR_DEADZONE)
-            player_set_anim(player, ANIM_AIR_UP, 10);
+            player_set_anim(player, ANIM_AIR_UP, false);
 
         // DOWN
         else if (input->move.y < -ATTACK_DIR_DEADZONE)
-            player_set_anim(player, ANIM_AIR_DWN, 10);
+            player_set_anim(player, ANIM_AIR_DWN, false);
+
+        // NEUTRAL
+        else
+            player_set_anim(player, ANIM_AIR_NEU, false);
 
 
         return true;
@@ -136,7 +140,7 @@ animation_t luigi_ledge_grab = {
 };
 
 // //
-void luigi_missile_hit(player_t* p) {
+static void luigi_missile_hit(player_t* p) {
     p->anim_frame += 4;
     p->rb.vel = (vec2_t){ 0 };
 }
@@ -274,11 +278,64 @@ animation_t luigi_down_air = {
     .frames = l_dair_keyframes
 };
 
+// //
+frame_data_t l_nair_kf0[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_nair) } };
+frame_data_t l_nair_kf1[] = { { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL,
+        .box = {.extent = {8, 4}, .pos = { 4, 16 }}, .damage = 10, .kb = { 1200, 600 }} } };
+
+
+keyframe_t l_nair_keyframes[] = {
+    { .frame_number = 1, .duration = 1, .num_actions = 1, .frame_actions = l_nair_kf0 },
+    { .frame_number = 2, .duration = 14, .num_actions = 1, .frame_actions = l_nair_kf1 }
+};
+
+animation_t luigi_neu_air = {
+    .total_frames = 23,
+    .num_keyframes = 2,
+    .frames = l_nair_keyframes
+};
+
+// //
+
+static bool down_b_mash(player_t* player, input_t* input, input_t* last_input) {
+
+    if (input->jump && !last_input->jump)
+        phy_add_force(&player->rb, (vec2_t) {0, -100});
+
+    return false;
+
+}
+
+frame_data_t l_dsp_kf0[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_dsp) } };
+frame_data_t l_dsp_kf1[] = {
+    { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL, .box = {.extent = {8, 4}, .pos = { 4, 16 }}, .damage = 10, .kb = { 1200, 600 }} },
+    { .type = FRAME_CUSTOM_FUNC, .data.custom_function = down_b_mash }
+};
+frame_data_t l_dsp_kf2[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) } };
+frame_data_t l_dsp_kf3[] = {
+    { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL, .box = {.extent = {8, 4}, .pos = { 4, 16 }}, .damage = 10, .kb = { 1200, 600 }} },
+    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) }
+};
+
+
+keyframe_t l_dsp_keyframes[] = {
+    { .frame_number = 3, .duration = 1, .num_actions = 1, .frame_actions = l_dsp_kf0 },
+    { .frame_number = 4, .duration = 14, .num_actions = 2, .frame_actions = l_dsp_kf1 },
+    { .frame_number = 18, .duration = 1, .num_actions = 1, .frame_actions = l_dsp_kf2 },
+    { .frame_number = 30, .duration = 1, .num_actions = 2, .frame_actions = l_dsp_kf3 }
+};
+
+animation_t luigi_down_special = {
+    .total_frames = 40,
+    .num_keyframes = 2,
+    .frames = l_dsp_keyframes
+};
+
 animation_t* luigi_animations[] = {
     &luigi_neutral, &luigi_ledge_grab, &luigi_jab,
-    NULL, &luigi_forward_air, &luigi_back_air,
+    &luigi_neu_air, &luigi_forward_air, &luigi_back_air,
     &luigi_up_air, &luigi_down_air, NULL, 
-    &luigi_missile, &luigi_up_special, NULL
+    &luigi_missile, &luigi_up_special, &luigi_down_special
 };
 
 

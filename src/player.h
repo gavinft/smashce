@@ -70,6 +70,8 @@ extern_duplicate(luigi_bair);
 extern_duplicate(luigi_usp);
 extern_duplicate(luigi_uair);
 extern_duplicate(luigi_dair);
+extern_duplicate(luigi_nair);
+extern_duplicate(luigi_dsp);
 
 
 #define TURN_DEADZONE (0.1f)
