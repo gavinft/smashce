@@ -181,7 +181,6 @@ void draw() {
     for (size_t i = 0; i < oob_players_len; i++) {
         #define OOB_WINDOW_OFFSET (3)
         box_t window = {oob_players[i]->rb.col.box.pos, {30, 25}};
-        float distance = 0;
         
         if (phy_box_left(oob_players[i]->rb.col.box) > phy_box_right(screen)) {
             float distance = phy_box_left(oob_players[i]->rb.col.box) - phy_box_right(screen);
