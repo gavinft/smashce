@@ -106,7 +106,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                             .pos = {170, 30},
                             .extent = {luigi_neu_r_width / 2.0f, luigi_neu_r_height / 2.0f}
                         },
-                        .friction = 0.8f
+                        .friction = 0.4f
                     },
                     .resistance = 0.1f,
                     .inv_mass = 1 / 2.0f,
@@ -118,8 +118,8 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 .charac = PLAYER_LUIGI,
                 .sprite = luigi_neu_r,
                 .dir = DIR_RIGHT,
-                .max_speed = 175,
-                .ground_accel = 2500,
+                .max_speed = 115,
+                .ground_accel = 2200,
                 .air_accel = 800,
                 .jump_vel = -400,
                 .can_grab_ledge = true,
@@ -352,9 +352,14 @@ void player_attackupdate(player_t *player, input_t *input, input_t* last_input, 
     
 }
 
+void player_draw_pos(player_t *player, vec2_t *pos) {
+    gfx_TransparentSprite(player->sprite, pos->x - player->sprite->width / 2 + player->sprite_offset.x, pos->y - player->sprite->height / 2 + player->sprite_offset.y);
+}
+
 void player_draw(player_t *player) {
     rb_t *rb = &player->rb;
-    gfx_TransparentSprite(player->sprite, rb->col.box.pos.x - player->sprite->width / 2 + player->sprite_offset.x, rb->col.box.pos.y - player->sprite->height / 2 + player->sprite_offset.x);
+    vec2_t pos = {rb->col.box.pos.x, rb->col.box.pos.y};
+    player_draw_pos(player, &pos);
 }
 
 #ifndef NDEBUG

@@ -132,6 +132,7 @@ static bool step() {
 }
 
 #define draw_box(box) (gfx_Rectangle(phy_box_left(box), phy_box_top(box), box.extent.x * 2, box.extent.y * 2))
+#define fill_box(box) (gfx_FillRectangle(phy_box_left(box), phy_box_top(box), box.extent.x * 2, box.extent.y * 2))
 
 void draw() {
     /* Initialize graphics drawing */
@@ -149,8 +150,19 @@ void draw() {
     #endif /* NDEBUG */
 
     /* render players */
+    box_t screen = {.pos = {160, 120}, .extent = {160, 120}}; // 320x240
+    player_t* oob_players[2];
+    size_t oob_players_len = 0;
+    if (phy_box_overlap(players[0].rb.col.box, screen)) {
     player_draw(&players[0]);
+    } else {
+        oob_players[oob_players_len++] = &players[0];
+    }
+    if (phy_box_overlap(players[1].rb.col.box, screen)) {
     player_draw(&players[1]);
+    } else {
+        oob_players[oob_players_len++] = &players[1];
+    }
     gfx_SetTextXY(50, GFX_LCD_HEIGHT - 20);
     gfx_PrintInt(players[0].damage_percent, 3);
     gfx_SetTextXY(100, GFX_LCD_HEIGHT - 20);
@@ -165,6 +177,37 @@ void draw() {
     gfx_PrintInt(players[0].rb.vel.y, 1);
     gfx_PrintString(")");
 
+    // draw out of bounds players
+    for (size_t i = 0; i < oob_players_len; i++) {
+        #define OOB_WINDOW_OFFSET (3)
+        box_t window = {oob_players[i]->rb.col.box.pos, {30, 25}};
+        float distance = 0;
+        
+        if (phy_box_left(oob_players[i]->rb.col.box) > phy_box_right(screen)) {
+            float distance = phy_box_left(oob_players[i]->rb.col.box) - phy_box_right(screen);
+            window.extent.x -= fminf(distance / 4, 10);
+            window.extent.y -= fminf(distance / 4, 10);
+            window.pos.x = phy_box_right(screen) - OOB_WINDOW_OFFSET - window.extent.x;
+        } else if (phy_box_right(oob_players[i]->rb.col.box) < phy_box_left(screen)) {
+            float distance = phy_box_left(screen) - phy_box_right(oob_players[i]->rb.col.box);
+            window.extent.x -= fminf(distance / 4, 10);
+            window.extent.y -= fminf(distance / 4, 10);
+            window.pos.x = phy_box_left(screen) + OOB_WINDOW_OFFSET + window.extent.x;
+        }
+
+        if (phy_box_top(oob_players[i]->rb.col.box) > phy_box_bot(screen)) {
+            window.pos.y = phy_box_bot(screen) - OOB_WINDOW_OFFSET - window.extent.y;
+        } else if (phy_box_bot(oob_players[i]->rb.col.box) < phy_box_top(screen)) {
+            window.pos.y = phy_box_top(screen) + OOB_WINDOW_OFFSET + window.extent.y;
+        }
+
+        gfx_SetColor(COLOR_BG);
+        fill_box(window);
+        gfx_SetColor(COLOR_DBG_HITBOX);
+        draw_box(window);
+        player_draw_pos(oob_players[i], &window.pos);
+    }
+  
     gfx_SetTextXY(230, 5);
     gfx_PrintString("Raw FPS: ");
     gfx_PrintInt(CLOCKS_PER_SEC / (float)(clock() - last_time), 2);
