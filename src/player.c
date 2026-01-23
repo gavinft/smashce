@@ -334,18 +334,20 @@ void player_anim_run_keyframe(player_t* player, input_t* input, input_t* last_in
     if (increment) {
     #endif
         // frame is a keyframe, increment both 
-        if (frame->duration != -1)
+        
+        if (frame->duration != -1) {
             player->anim_frame++;
 
-        // add to the keyframe if the next frame is above frme number + duration
-        if (player->anim_frame >= frame->frame_number + frame->duration && frame->duration != -1)
-            player->anim_keyframe++;
+            // add to the keyframe if the next frame is above frme number + duration
+            if (player->anim_frame >= frame->frame_number + frame->duration && frame->duration)
+                player->anim_keyframe++;
 
-        // reset if at end
-        if (player->anim_frame >= anim->total_frames && frame->duration != -1) {
-            player->anim_frame = 0;
-            player->anim_keyframe = 0;
-            player->current_animation = ANIM_NEUTRAL;
+            // reset if at end
+            if (player->anim_frame >= anim->total_frames) {
+                player->anim_frame = 0;
+                player->anim_keyframe = 0;
+                player->current_animation = ANIM_NEUTRAL;
+            }
         }
     #ifndef NDEBUG
     }

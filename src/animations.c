@@ -24,8 +24,10 @@ static bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last
     // AERIAL
     if (input->attack && !last_input->attack && !player->rb.grounded) {
 
+        float abs_x = fabsf(input->move.x);
+
         // SIDE
-        if (fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
+        if (abs_x > ATTACK_DIR_DEADZONE && abs_x > fabsf(input->move.y)) {
             if (same_dir(input->move.x, player->dir))
                 player_set_anim(player, ANIM_AIR_FWD, false);
             else 
@@ -41,7 +43,7 @@ static bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last
             player_set_anim(player, ANIM_AIR_DWN, false);
 
         // NEUTRAL
-        else
+        else if (abs_x < ATTACK_DIR_DEADZONE)
             player_set_anim(player, ANIM_AIR_NEU, false);
 
 
@@ -52,8 +54,10 @@ static bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last
     // SPECIAL
     if (input->special && !last_input->special) {
 
+        float abs_x = fabsf(input->move.x);
+
         // SIDE
-        if (fabsf(input->move.x) > ATTACK_DIR_DEADZONE) {
+        if (abs_x > ATTACK_DIR_DEADZONE && abs_x > fabsf(input->move.y)) {
             player_set_anim(player, ANIM_SP_SIDE, true);
             side_special_attack_update_direction(player, input);
         }
@@ -61,6 +65,10 @@ static bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last
         // UP
         else if (input->move.y > ATTACK_DIR_DEADZONE)
             player_set_anim(player, ANIM_SP_UP, true);
+
+        // DOWN
+        else if (input->move.y < -ATTACK_DIR_DEADZONE)
+            player_set_anim(player, ANIM_SP_DWN, true);
         
         return true;
     }
