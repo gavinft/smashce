@@ -41,6 +41,7 @@ typedef struct player {
     int lockout_frames;
     int anim_frame;
     bool can_grab_ledge;
+    int iframes;
 } player_t;
 
 typedef struct {
@@ -72,6 +73,8 @@ extern_duplicate(luigi_uair);
 extern_duplicate(luigi_dair);
 extern_duplicate(luigi_nair);
 extern_duplicate(luigi_dsp);
+extern_duplicate(luigi_dsp2);
+extern_duplicate(luigi_dsp3);
 
 
 #define TURN_DEADZONE (0.1f)
@@ -89,7 +92,7 @@ void player_anim_run_keyframe(player_t* player, input_t* input, input_t* last_in
 #endif
 void player_draw(player_t *player);
 void player_draw_pos(player_t *player, vec2_t *pos);
-bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len);
+bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len, int iframes);
 void player_set_anim(player_t* player, animation_type_t anim, bool lockout);
 void jump(player_t *player);
 

@@ -72,7 +72,7 @@ void phy_step(float dt) {
         
         // gravity
         if (rb->vel.y < rb->max_fall)
-            rb->vel.y += PHY_GRAVITY * dt;
+            rb->vel.y += fminf(PHY_GRAVITY * dt, rb->max_fall - rb->vel.y);
 
         // accumulated forces
         rb->vel.x += rb->total_force.x * rb->inv_mass * dt;

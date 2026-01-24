@@ -23,6 +23,8 @@ converts:
       - luigi_bair_r.png
       - luigi_dair_r.png
       - luigi_dsp_r.png
+      - luigi_dsp2_r.png
+      - luigi_dsp3_r.png
       - luigi_fair_r.png
       - luigi_nair_r.png
       - luigi_uair_r.png

@@ -27,6 +27,8 @@ flippable_duplicate(luigi_uair);
 flippable_duplicate(luigi_dair);
 flippable_duplicate(luigi_nair);
 flippable_duplicate(luigi_dsp);
+flippable_duplicate(luigi_dsp2);
+flippable_duplicate(luigi_dsp3);
 
 
 
@@ -46,7 +48,8 @@ void player_load_sprites() {
     flip(luigi_dair);
     flip(luigi_nair);
     flip(luigi_dsp);
-
+    flip(luigi_dsp2);
+    flip(luigi_dsp3);
 }
 
 void player_set_charac(player_t *player, player_char_t charac) {
@@ -151,6 +154,9 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
     float accel;
     float max_speed;
 
+    if (player->iframes > 0)
+        player->iframes--;
+
     if (!input)
         return;
 
@@ -222,7 +228,7 @@ void player_lateupdate(player_t *player, input_t *input, input_t* last_input, fl
     }
 }
 
-bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len) {
+bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len, int iframes) {
     #ifndef NDEBUG
     if (hurtboxes_len < HURTBOXES_MAX) {
         hurtboxes[hurtboxes_len++] = *box;
@@ -236,6 +242,8 @@ bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hit
         if (phy_box_overlap(*box, hitbox->box)) {
             if (player == &hitboxes[i])
                 continue;
+            if (player->iframes > 0)
+                continue;
 
             hitboxes[i].damage_percent += damage;
 
@@ -245,6 +253,7 @@ bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hit
             total_kb.x *= player->dir;
 
             phy_add_force(&hitboxes[i].rb, total_kb);
+            player->iframes = iframes;
             
             hit = true;
         }
@@ -270,7 +279,7 @@ static void anim_process_actions(player_t *player, keyframe_t *frame, input_t *i
                     player->rb.col.box.pos.y + action->data.hurtbox.box.pos.y
                 };
                 if (hurtbox(player, &(box_t){.pos = pos, .extent = action->data.hurtbox.box.extent },
-                    &action->data.hurtbox.kb, action->data.hurtbox.damage, hitboxes, num_hitboxes)
+                    &action->data.hurtbox.kb, action->data.hurtbox.damage, hitboxes, num_hitboxes, 1)
                     && action->data.hurtbox.on_hit != NULL)
                     action->data.hurtbox.on_hit(player);
                 break;
@@ -289,6 +298,7 @@ static void anim_process_actions(player_t *player, keyframe_t *frame, input_t *i
                 return; // return because animation has changed
             case FRAME_SET_SPRITE:
                 player->sprite = player->dir > 0 ? action->data.sprite.right : action->data.sprite.left;
+                player->sprite_offset = action->data.sprite.offset;
                 break;
         }
     }
@@ -307,26 +317,28 @@ void player_anim_run_keyframe(player_t* player, input_t* input, input_t* last_in
     // check if the keyframe is the current frame
     if (
     #ifndef NDEBUG
-        increment &&
+        // increment &&
     #endif 
         (player->anim_keyframe >= anim->num_keyframes ||
         (frame->duration != -1 && (player->anim_frame < frame->frame_number ||
         player->anim_frame >= frame->frame_number + frame->duration )))) {
         // frame is a regular frame, return
 
-        player->anim_frame++;
+        if (increment) {
+            player->anim_frame++;
 
-        if (player->anim_frame >= anim->total_frames) { // reset if at end
-            player->anim_frame = 0;
-            player->anim_keyframe = 0;
-            player->current_animation = ANIM_NEUTRAL;
+            if (player->anim_frame >= anim->total_frames) { // reset if at end
+                player->anim_frame = 0;
+                player->anim_keyframe = 0;
+                player->current_animation = ANIM_NEUTRAL;
+            }
         }
 
         return;
     }
 
     #ifndef NDEBUG
-    if (player->anim_keyframe < anim->num_keyframes)
+    // if (player->anim_keyframe < anim->num_keyframes)
     #endif
         anim_process_actions(player, frame, input, last_input, hitboxes, num_hitboxes);
 

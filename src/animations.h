@@ -42,6 +42,7 @@ typedef enum {
 typedef struct {
     gfx_sprite_t* left;
     gfx_sprite_t* right;
+    vec2_t offset;
 } lr_sprite_t;
 
 typedef struct {
@@ -76,6 +77,7 @@ typedef struct {
 } animation_t;
 
 #define both_sprites(name) {.left = (gfx_sprite_t*)name##_l_data, .right = name ## _r}
+#define sprites_offset(name, x, y) {.left = (gfx_sprite_t*)name##_l_data, .right = name ## _r, .offset = {x, y}}
 
 extern animation_t* luigi_animations[];
 

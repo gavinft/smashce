@@ -307,35 +307,48 @@ animation_t luigi_neu_air = {
 
 static bool down_b_mash(player_t* player, input_t* input, input_t* last_input) {
 
-    if (input->jump && !last_input->jump)
-        phy_add_force(&player->rb, (vec2_t) {0, -100});
+    if (input->special && !last_input->special)
+        // phy_add_force(&player->rb, (vec2_t) {0, -100});
+        player->rb.col.box.pos.y -= 4;
 
     return false;
 
 }
 
-frame_data_t l_dsp_kf0[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_dsp) } };
+frame_data_t l_dsp_kf0[] = {
+    { .type = FRAME_SET_SPRITE, .data.sprite = sprites_offset(luigi_dsp2, 0, -1) },
+    { .type = FRAME_SET_MAXFALL, .data.max_fall = 10 },
+    { .type = FRAME_SET_VELOCITY, .data.player_velocity = {0}}
+};
 frame_data_t l_dsp_kf1[] = {
-    { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL, .box = {.extent = {8, 4}, .pos = { 4, 16 }}, .damage = 10, .kb = { 1200, 600 }} },
+    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_dsp) },
+    { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL, .box = {.extent = {8, 5}, .pos = { 8, -3 }}, .damage = 10, .kb = { 0, -800 }} },
+    { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL, .box = {.extent = {8, 5}, .pos = { -8, -3 }}, .damage = 10, .kb = { 0, -800 }} },
     { .type = FRAME_CUSTOM_FUNC, .data.custom_function = down_b_mash }
 };
-frame_data_t l_dsp_kf2[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) } };
+frame_data_t l_dsp_kf2[] = { { .type = FRAME_SET_SPRITE, .data.sprite = sprites_offset(luigi_dsp2, 0, -1) } };
 frame_data_t l_dsp_kf3[] = {
-    { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL, .box = {.extent = {8, 4}, .pos = { 4, 16 }}, .damage = 10, .kb = { 1200, 600 }} },
-    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_dsp) }
+    { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL, .box = {.extent = {8, 5}, .pos = { 8, -5 }}, .damage = 10, .kb = { 0, -800 }} },
+    { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL, .box = {.extent = {8, 5}, .pos = { -8, -5 }}, .damage = 10, .kb = { 0, -800 }} },
+    { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = NULL, .box = {.extent = {8, 4}, .pos = { 0, 16 }}, .damage = 10, .kb = { 0, 1200 }} },
+    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_dsp3) }
 };
-frame_data_t l_dsp_kf4[] = { { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) } };
+frame_data_t l_dsp_kf4[] = { 
+    { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu) },
+    { .type = FRAME_SET_MAXFALL, .data.max_fall = 20 },
+};
 
 keyframe_t l_dsp_keyframes[] = {
-    { .frame_number = 3, .duration = 1, .num_actions = 1, .frame_actions = l_dsp_kf0 },
-    { .frame_number = 4, .duration = 14, .num_actions = 2, .frame_actions = l_dsp_kf1 },
-    { .frame_number = 18, .duration = 1, .num_actions = 1, .frame_actions = l_dsp_kf2 },
-    { .frame_number = 30, .duration = 2, .num_actions = 2, .frame_actions = l_dsp_kf3 },
-    { .frame_number = 34, .duration = 1, .num_actions = 1, .frame_actions = l_dsp_kf4 },
+    { .frame_number = 0, .duration = 1, .num_actions = 3, .frame_actions = l_dsp_kf0 },
+    { .frame_number = 4, .duration = 20, .num_actions = 4, .frame_actions = l_dsp_kf1 },
+    { .frame_number = 24, .duration = 1, .num_actions = 1, .frame_actions = l_dsp_kf2 },
+    { .frame_number = 30, .duration = 2, .num_actions = 4, .frame_actions = l_dsp_kf3 },
+    { .frame_number = 35, .duration = 1, .num_actions = 2, .frame_actions = l_dsp_kf4 },
+    // { .frame_number = 34, .duration = 1, .num_actions = 1, .frame_actions = l_dsp_kf4 },
 };
 
 animation_t luigi_down_special = {
-    .total_frames = 40,
+    .total_frames = 42,
     .num_keyframes = 5,
     .frames = l_dsp_keyframes
 };
