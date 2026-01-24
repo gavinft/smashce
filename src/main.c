@@ -15,8 +15,13 @@
 clock_t last_time;
 #define FRAME_TIME CLOCKS_PER_SEC / 30.0
 
-collider_t stage_col = {.box = {.pos = {160, 190}, .extent = {130, 20}}, .friction = 1.3f};
-collider_t box_col = {.box = {.pos = {160, 110}, .extent = {20, 20}}, .friction = 0.3f};
+collider_t stage_col = {.box = {.pos = {GFX_LCD_WIDTH / 2, GFX_LCD_HEIGHT - 28 + 1}, .extent = {119, 28}}, .friction = 1.3f};
+// collider_t box_col = {.box = {.pos = {160, 110}, .extent = {20, 20}}, .friction = 0.3f};
+collider_t platforms[] = {
+    {.box = {.pos = {160, 110}, .extent = {24, 1.5f}}, .friction = 1.3f},
+    {.box = {.pos = {90, 140}, .extent = {24, 1.5f}}, .friction = 1.3f},
+    {.box = {.pos = {GFX_LCD_WIDTH - 90, 140}, .extent = {24, 1.5f}}, .friction = 1.3f}
+};
 ledge_t left_ledge = {.box = {.pos = {24, 175}, .extent = {7, 10}}, .grab_dir = DIR_RIGHT};
 ledge_t right_ledge = {.box = {.pos = {296, 175}, .extent = {7, 10}}, .grab_dir = DIR_LEFT};
 #define MAX_PLAYERS 2
@@ -38,7 +43,7 @@ int main(void)
     begin(); // No rendering allowed!
     gfx_Begin();
     gfx_SetPalette(global_palette, sizeof_global_palette, 0);
-    gfx_SetTransparentColor(0);
+    gfx_SetTransparentColor(6);
     gfx_SetDrawBuffer(); // Draw to the buffer to avoid rendering artifacts
 
     while (step()) { // No rendering allowed in step!
@@ -221,7 +226,12 @@ static void begin() {
     phy_rbs[0] = &players[0].rb;
     phy_rbs[1] = &players[1].rb;
     phy_stage_colliders[0] = &stage_col;
-    phy_stage_colliders[1] = &box_col;
+    phy_stage_colliders[1] = platforms;
+    phy_stage_colliders[2] = platforms + 1;
+    phy_stage_colliders[3] = platforms + 2;
+
+
+    // phy_stage_colliders[1] = &box_col;
     phy_ledges[0] = &left_ledge;
     phy_ledges[1] = &right_ledge;
 
@@ -285,16 +295,35 @@ static bool step() {
     return !kb_IsDown(kb_KeyClear);
 }
 
+#define PLATFORM_LENGTH 48
+
+void draw_platform(int x, int y) {
+    for (int i = 0; i < PLATFORM_LENGTH; i += platform_width) {
+        gfx_Sprite_NoClip(platform, x + i, y);
+    }
+}
+
 #define draw_box(box) (gfx_Rectangle(phy_box_left(box), phy_box_top(box), box.extent.x * 2, box.extent.y * 2))
 #define fill_box(box) (gfx_FillRectangle(phy_box_left(box), phy_box_top(box), box.extent.x * 2, box.extent.y * 2))
 
 void draw() {
     /* Initialize graphics drawing */
-    gfx_FillScreen(COLOR_BG);
-    
+    gfx_ZeroScreen();
+    gfx_SetColor(7);
+    gfx_FillRectangle_NoClip(0, GFX_LCD_HEIGHT - 90, GFX_LCD_WIDTH, 90 - 64);
+    gfx_FillRectangle_NoClip(0, GFX_LCD_HEIGHT - 64, (GFX_LCD_WIDTH - yoshi_balls_stage_width) / 2, 64);
+    gfx_FillRectangle_NoClip(GFX_LCD_WIDTH - (GFX_LCD_WIDTH - yoshi_balls_stage_width) / 2, GFX_LCD_HEIGHT - 64, (GFX_LCD_WIDTH - yoshi_balls_stage_width) / 2, 64);
+
+
+
+    gfx_Sprite_NoClip(yoshi_balls_stage, GFX_LCD_WIDTH / 2 - yoshi_balls_stage_width / 2, GFX_LCD_HEIGHT - yoshi_balls_stage_height);
     gfx_SetColor(COLOR_STAGE);
-    draw_box(stage_col.box);
-    draw_box(box_col.box);
+    // draw_box(stage_col.box);
+    // draw_box(box_col.box);
+
+    for (int i = 0; i < 3; i++) {
+        draw_platform(phy_box_left(platforms[i].box), phy_box_top(platforms[i].box));
+    }
 
     #ifndef NDEBUG
     /* show ledges */
