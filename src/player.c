@@ -324,7 +324,9 @@ void player_anim_run_keyframe(player_t* player, input_t* input, input_t* last_in
         player->anim_frame >= frame->frame_number + frame->duration )))) {
         // frame is a regular frame, return
 
+        #ifndef NDEBUG
         if (increment) {
+        #endif
             player->anim_frame++;
 
             if (player->anim_frame >= anim->total_frames) { // reset if at end
@@ -332,9 +334,12 @@ void player_anim_run_keyframe(player_t* player, input_t* input, input_t* last_in
                 player->anim_keyframe = 0;
                 player->current_animation = ANIM_NEUTRAL;
             }
+        #ifndef NDEBUG
         }
-
+        #endif
+        
         return;
+        
     }
 
     #ifndef NDEBUG
