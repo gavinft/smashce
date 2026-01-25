@@ -31,7 +31,11 @@ typedef struct player {
     animation_t** animations; // array that has length of that enum in animations.h
     animation_type_t current_animation; 
     int anim_keyframe;
-    
+
+    union {
+        int charge_frames;
+    } character_data;
+
     float max_speed;
     float ground_accel;
     float air_accel;

@@ -48,7 +48,7 @@ typedef struct {
 typedef struct {
 
     union {
-        bool (*custom_function)(struct player*, struct input*, struct input*); // returns whether or not animation ends early
+        bool (*custom_function)(struct player*, struct input*, struct input*, struct player*, size_t); // returns whether or not animation ends early
         vec2_t player_velocity;
         float max_fall;
         lr_sprite_t sprite;

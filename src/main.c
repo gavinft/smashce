@@ -22,8 +22,8 @@ collider_t platforms[] = {
     {.box = {.pos = {90, 140}, .extent = {24, 1.5f}}, .friction = 1.3f},
     {.box = {.pos = {GFX_LCD_WIDTH - 90, 140}, .extent = {24, 1.5f}}, .friction = 1.3f}
 };
-ledge_t left_ledge = {.box = {.pos = {24, 175}, .extent = {7, 10}}, .grab_dir = DIR_RIGHT};
-ledge_t right_ledge = {.box = {.pos = {296, 175}, .extent = {7, 10}}, .grab_dir = DIR_LEFT};
+ledge_t left_ledge = {.box = {.pos = {35, 188}, .extent = {7, 10}}, .grab_dir = DIR_RIGHT};
+ledge_t right_ledge = {.box = {.pos = {GFX_LCD_WIDTH - 35, 188}, .extent = {7, 10}}, .grab_dir = DIR_LEFT};
 #define MAX_PLAYERS 2
 player_t players[MAX_PLAYERS];
 

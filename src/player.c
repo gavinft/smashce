@@ -269,7 +269,7 @@ static void anim_process_actions(player_t *player, keyframe_t *frame, input_t *i
 
         switch (action->type) {
             case FRAME_CUSTOM_FUNC:
-                if (action->data.custom_function(player, input, last_input))
+                if (action->data.custom_function(player, input, last_input, hitboxes, num_hitboxes))
                     return;
                 break;
             case FRAME_HURTBOX:

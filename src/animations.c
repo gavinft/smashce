@@ -13,7 +13,7 @@ static void side_special_attack_update_direction(player_t *player, input_t *inpu
     
 }
 
-static bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last_input) {
+static bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last_input, player_t* hitboxes, size_t num_hitboxes) {
 
     // NORMAL ATTACK
     if (input->attack && !last_input->attack && player->rb.grounded) {
@@ -104,7 +104,7 @@ static bool try_leave_ledge(player_t *player, input_t *input, input_t *last_inpu
     return false;
 }
 
-static bool ledge_check_leave(player_t* player, input_t* input, input_t* last_input) {
+static bool ledge_check_leave(player_t* player, input_t* input, input_t* last_input, player_t* hitboxes, size_t num_hitboxes) {
     if (try_leave_ledge(player, input, last_input)) {
         player_set_anim(player, ANIM_NEUTRAL, false);
         return true;
@@ -148,9 +148,32 @@ animation_t luigi_ledge_grab = {
 };
 
 // //
-static void luigi_missile_hit(player_t* p) {
-    p->anim_frame += 4;
-    p->rb.vel = (vec2_t){ 0 };
+#define LUIGI_MAX_CHARGE_FRAMES 12
+
+static bool luigi_missile_charge(player_t* p, input_t* input, input_t* last_input, player_t* hitboxes, size_t num_hitboxes) {
+    if (input->special && p->character_data.charge_frames < LUIGI_MAX_CHARGE_FRAMES) {
+        p->character_data.charge_frames++;
+        p->anim_frame--;
+    }
+
+    return false;
+}
+static bool luigi_fire_missile(player_t* p, input_t* input, input_t* last_input, player_t* hitboxes, size_t num_hitboxes) {
+    p->rb.vel = (vec2_t){ p->dir * (50 * p->character_data.charge_frames + 200), 0};
+    return false;
+}
+
+static bool luigi_missile_hitbox(player_t* p, input_t* input, input_t* last_input, player_t* hitboxes, size_t num_hitboxes) {
+    int f = p->character_data.charge_frames;
+    if (hurtbox(p, &(box_t){.extent = {11, 5}, .pos = { p->rb.col.box.pos.x, p->rb.col.box.pos.y }}, &(vec2_t){ (f+2) * 1000, (f+2) * 20 }, 4 + f, hitboxes, num_hitboxes, 0)) {
+        p->anim_frame += 4;
+        p->rb.vel = (vec2_t){ 0 };
+    }
+    return false;
+}
+static bool luigi_reset_charge(player_t* p, input_t* input, input_t* last_input, player_t* hitboxes, size_t num_hitboxes) {
+    p->character_data.charge_frames = 0;
+    return false;
 }
 
 frame_data_t l_missile_kf0[] = {
@@ -158,24 +181,31 @@ frame_data_t l_missile_kf0[] = {
     { .type = FRAME_SET_MAXFALL, .data.max_fall = 20 },
     { .type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_ssp) }
 };
+frame_data_t l_missile_charge[] = {
+    { .type = FRAME_CUSTOM_FUNC, .data.custom_function = luigi_missile_charge }
+};
 frame_data_t l_missile_kf1[] = {
-    { .type = FRAME_SET_VELOCITY, .data.player_velocity = { 400, 0 } },
+    { .type = FRAME_CUSTOM_FUNC, .data.custom_function = luigi_fire_missile },
     { .type = FRAME_SET_MAXFALL, .data.max_fall = 80 }
 };
 frame_data_t l_missile_kf2[] = {
-    { .type = FRAME_HURTBOX, .data.hurtbox = { .on_hit = luigi_missile_hit,
-        .box = {.extent = {11, 5}, .pos = { 0 }}, .damage = 12, .kb = { 10000, 200 }}},
+    { .type = FRAME_CUSTOM_FUNC, .data.custom_function = luigi_missile_hitbox }
+};
+frame_data_t l_missile_reset[] = {
+    { .type = FRAME_CUSTOM_FUNC, .data.custom_function =  luigi_reset_charge }
 };
 
 keyframe_t l_missile_keyframes[] = {
     { .frame_number = 0, .duration = 1, .num_actions = 3, .frame_actions = l_missile_kf0 },
+    { .frame_number = 1, .duration = 1, .num_actions = 1, .frame_actions = l_missile_charge },
     { .frame_number = 9, .duration = 1, .num_actions = 2, .frame_actions = l_missile_kf1 },
     { .frame_number = 10, .duration = 15, .num_actions = 1, .frame_actions = l_missile_kf2 },
+    { .frame_number = 26, .duration = 1, .num_actions = 1, .frame_actions = l_missile_reset}
 };
 
 animation_t luigi_missile = {
     .total_frames = 30,
-    .num_keyframes = 3,
+    .num_keyframes = 5,
     .frames = l_missile_keyframes
 };
 
@@ -305,7 +335,7 @@ animation_t luigi_neu_air = {
 
 // //
 
-static bool down_b_mash(player_t* player, input_t* input, input_t* last_input) {
+static bool down_b_mash(player_t* player, input_t* input, input_t* last_input, player_t* hitboxes, size_t num_hitboxes) {
 
     if (input->special && !last_input->special)
         // phy_add_force(&player->rb, (vec2_t) {0, -100});
