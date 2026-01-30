@@ -8,7 +8,7 @@ typedef struct {
     float y;
 } vec2_t;
 
-inline float vec_Magnitude(vec2_t v);
+#define vec_Magnitude(v) (sqrtf((v).x * (v).x + (v).y * (v).y))
 
 vec2_t vec_AddMagnitude(vec2_t v, float a);
 
