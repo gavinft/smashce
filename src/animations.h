@@ -81,4 +81,6 @@ typedef struct {
 
 extern animation_t* luigi_animations[];
 
+void animation_load_sprites();
+
 #endif

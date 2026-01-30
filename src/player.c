@@ -13,45 +13,6 @@ size_t hurtboxes_len;
 
 #define ATTACK_PERCENT_SCALE (100)
 
-flippable_duplicate(oiram_neu);
-flippable_duplicate(mario_neu);
-
-flippable_duplicate(luigi_neu);
-flippable_duplicate(luigi_att);
-flippable_duplicate(luigi_ssp);
-flippable_duplicate(luigi_lg);
-flippable_duplicate(luigi_fair);
-flippable_duplicate(luigi_bair);
-flippable_duplicate(luigi_usp);
-flippable_duplicate(luigi_uair);
-flippable_duplicate(luigi_dair);
-flippable_duplicate(luigi_nair);
-flippable_duplicate(luigi_dsp);
-flippable_duplicate(luigi_dsp2);
-flippable_duplicate(luigi_dsp3);
-
-
-
-void player_load_sprites() {
-    flip(oiram_neu);
-    flip(mario_neu);
-
-    flip(luigi_neu);
-
-    flip(luigi_att);
-    flip(luigi_ssp);
-    flip(luigi_lg);
-    flip(luigi_fair);
-    flip(luigi_bair);
-    flip(luigi_usp);
-    flip(luigi_uair);
-    flip(luigi_dair);
-    flip(luigi_nair);
-    flip(luigi_dsp);
-    flip(luigi_dsp2);
-    flip(luigi_dsp3);
-}
-
 void player_set_charac(player_t *player, player_char_t charac) {
     switch (charac) {
         case PLAYER_OIRAM:
@@ -74,7 +35,6 @@ void player_set_charac(player_t *player, player_char_t charac) {
 
                 .charac = PLAYER_OIRAM,
                 .dir = DIR_RIGHT,
-                .sprite = oiram_neu_r,
                 .max_speed = 175,
                 .ground_accel = 2500,
                 .air_accel = 800,
@@ -102,7 +62,6 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 .current_animation = ANIM_NEUTRAL,
 
                 .charac = PLAYER_MARIO,
-                .sprite = mario_neu_r,
                 .dir = DIR_RIGHT,
                 .max_speed = 175,
                 .ground_accel = 2500,
@@ -130,7 +89,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                 .current_animation = ANIM_NEUTRAL,
 
                 .charac = PLAYER_LUIGI,
-                .sprite = luigi_neu_r,
+                // .sprite = luigi_neu_r,
                 .dir = DIR_RIGHT,
                 .max_speed = 115,
                 .ground_accel = 2200,
@@ -142,7 +101,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
     }
 }
 
-void jump(player_t *player) {
+void player_jump(player_t *player) {
     player->rb.vel.y = player->jump_vel;
     player->can_grab_ledge = true;
     if (player->rb.grounded || player->grabbed_ledge)
@@ -203,7 +162,7 @@ void player_update(player_t *player, input_t *input, input_t* last_input, float 
         }
 
         if (input->jump && !last_input->jump && player->state == PLAYER_STATE_ACTIONABLE && (player->rb.grounded || player->jumps < 1)) {
-            jump(player);
+            player_jump(player);
         }
     }
     
@@ -228,7 +187,7 @@ void player_lateupdate(player_t *player, input_t *input, input_t* last_input, fl
     }
 }
 
-bool hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len, int iframes) {
+bool player_hurtbox(player_t *player, box_t* box, vec2_t* kb, int damage, player_t* hitboxes, size_t hitboxes_len, int iframes) {
     #ifndef NDEBUG
     if (hurtboxes_len < HURTBOXES_MAX) {
         hurtboxes[hurtboxes_len++] = *box;
@@ -278,7 +237,7 @@ static void anim_process_actions(player_t *player, keyframe_t *frame, input_t *i
                     player->rb.col.box.pos.x + action->data.hurtbox.box.pos.x * player->dir,
                     player->rb.col.box.pos.y + action->data.hurtbox.box.pos.y
                 };
-                if (hurtbox(player, &(box_t){.pos = pos, .extent = action->data.hurtbox.box.extent },
+                if (player_hurtbox(player, &(box_t){.pos = pos, .extent = action->data.hurtbox.box.extent },
                     &action->data.hurtbox.kb, action->data.hurtbox.damage, hitboxes, num_hitboxes, 1)
                     && action->data.hurtbox.on_hit != NULL)
                     action->data.hurtbox.on_hit(player);

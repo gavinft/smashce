@@ -235,7 +235,7 @@ static void begin() {
     phy_ledges[0] = &left_ledge;
     phy_ledges[1] = &right_ledge;
 
-    player_load_sprites();
+    animation_load_sprites();
 
     dbg_printf("begun\n");
 }

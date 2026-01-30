@@ -1,7 +1,48 @@
 #include "player.h"
 #include <debug.h>
-/* ----- animation definitions ----- */
 
+/* ----- sprite definitions ----- */
+#define flippable_duplicate(name) gfx_UninitedSprite(name ## _l, name ## _r_width, name ## _r_height)
+#define flip(name) gfx_FlipSpriteY(name ## _r, name ## _l)
+
+flippable_duplicate(oiram_neu);
+flippable_duplicate(mario_neu);
+
+flippable_duplicate(luigi_neu);
+flippable_duplicate(luigi_att);
+flippable_duplicate(luigi_ssp);
+flippable_duplicate(luigi_lg);
+flippable_duplicate(luigi_fair);
+flippable_duplicate(luigi_bair);
+flippable_duplicate(luigi_usp);
+flippable_duplicate(luigi_uair);
+flippable_duplicate(luigi_dair);
+flippable_duplicate(luigi_nair);
+flippable_duplicate(luigi_dsp);
+flippable_duplicate(luigi_dsp2);
+flippable_duplicate(luigi_dsp3);
+
+void animation_load_sprites() {
+    flip(oiram_neu);
+    flip(mario_neu);
+
+    flip(luigi_neu);
+
+    flip(luigi_att);
+    flip(luigi_ssp);
+    flip(luigi_lg);
+    flip(luigi_fair);
+    flip(luigi_bair);
+    flip(luigi_usp);
+    flip(luigi_uair);
+    flip(luigi_dair);
+    flip(luigi_nair);
+    flip(luigi_dsp);
+    flip(luigi_dsp2);
+    flip(luigi_dsp3);
+}
+
+/* ----- animation definitions ----- */
 #define same_dir(a, b) ((a < 0 && b < 0) || (a > 0 && b > 0))
 
 
@@ -91,7 +132,7 @@ static bool neutral_scan_attacks(player_t* player, input_t* input, input_t* last
 // leaving ledge
 static bool try_leave_ledge(player_t *player, input_t *input, input_t *last_input) {
     if (input->jump && !last_input->jump) {
-        jump(player);
+        player_jump(player);
         player->grabbed_ledge = NULL;
         dbg_printf("jumped out of ledge\n");
         return true;
@@ -165,7 +206,7 @@ static bool luigi_fire_missile(player_t* p, input_t* input, input_t* last_input,
 
 static bool luigi_missile_hitbox(player_t* p, input_t* input, input_t* last_input, player_t* hitboxes, size_t num_hitboxes) {
     int f = p->character_data.charge_frames;
-    if (hurtbox(p, &(box_t){.extent = {11, 5}, .pos = { p->rb.col.box.pos.x, p->rb.col.box.pos.y }}, &(vec2_t){ (f+2) * 1000, (f+2) * 20 }, 4 + f, hitboxes, num_hitboxes, 0)) {
+    if (player_hurtbox(p, &(box_t){.extent = {11, 5}, .pos = { p->rb.col.box.pos.x, p->rb.col.box.pos.y }}, &(vec2_t){ (f+2) * 1000, (f+2) * 20 }, 4 + f, hitboxes, num_hitboxes, 0)) {
         p->anim_frame += 4;
         p->rb.vel = (vec2_t){ 0 };
     }
