@@ -73,6 +73,39 @@ static void next_line() {
     gfx_SetTextXY(5, gfx_GetTextY() + 10);
 }
 
+static const char* anim_type_name(animation_type_t type) {
+    switch (type) {
+        case ANIM_NEUTRAL:
+            return "ANIM_NEUTRAL";
+        case ANIM_LEDGE_GRAB:
+            return "ANIM_LEDGE_GRAB";
+        case ANIM_JUMP:
+            return "ANIM_JUMP";
+        case ANIM_ATTACK:
+            return "ANIM_ATTACK";
+        case ANIM_AIR_NEU:
+            return "ANIM_AIR_NEU";
+        case ANIM_AIR_FWD:
+            return "ANIM_AIR_FWD";
+        case ANIM_AIR_BCK:
+            return "ANIM_AIR_BCK";
+        case ANIM_AIR_UP:
+            return "ANIM_AIR_UP";
+        case ANIM_AIR_DWN:
+            return "ANIM_AIR_DWN";
+        case ANIM_SP_NEU:
+            return "ANIM_SP_NEU";
+        case ANIM_SP_SIDE:
+            return "ANIM_SP_SIDE";
+        case ANIM_SP_UP:
+            return "ANIM_SP_UP";
+        case ANIM_SP_DWN:
+            return "ANIM_SP_DWN";
+    }
+
+    return "anim type name not implemented";
+}
+
 static void debug_mode() {
     dbg_printf("debug_mode\n");
 
@@ -80,7 +113,7 @@ static void debug_mode() {
     static bool pressed_1 = false;
     static bool pressed_2 = false;
     static bool pressed_8 = false;
-    // static bool pressed_7 = false;
+    static bool pressed_7 = false;
     static bool pressed_left = false;
     static bool pressed_right = false;
     static player_t anim_player;
@@ -118,14 +151,21 @@ static void debug_mode() {
             pressed_8 = true;
             increment = true;
         }
-
-        // needs better implementation
-        /* if (!playback && pressed_7 && !kb_IsDown(kb_Key7)) {
+        
+        if (!playback && pressed_7 && !kb_IsDown(kb_Key7)) {
             pressed_7 = false;
-        } else if (!playback && !pressed_7 && kb_IsDown(kb_Key7)) {
+        } else if (!playback && !pressed_8 && !pressed_7 && kb_IsDown(kb_Key7) && anim_player.anim_frame > 0) {
             pressed_7 = true;
             anim_player.anim_frame -= 1;
-        } */
+            animation_t* anim = anim_player.animations[anim_player.current_animation];
+            keyframe_t* frame = &anim->frames[anim_player.anim_keyframe];
+            if (anim_player.anim_frame < frame->frame_number && anim_player.anim_keyframe > 0) {
+                if (anim_player.anim_keyframe > 0)
+                    anim_player.anim_keyframe -= 1;    
+                else
+                    anim_player.sprite = luigi_neu_r;
+            }
+        }
 
         if (pressed_left && !kb_IsDown(kb_KeyLeft)) {
             pressed_left = false;
@@ -136,6 +176,7 @@ static void debug_mode() {
                 anim_player.anim_frame = 0;
                 anim_player.anim_keyframe = 0;
                 current_anim -= 1;
+                anim_player.sprite = luigi_neu_r;
             }
         }
 
@@ -148,6 +189,7 @@ static void debug_mode() {
                 anim_player.anim_frame = 0;
                 anim_player.anim_keyframe = 0;
                 current_anim += 1;
+                anim_player.sprite = luigi_neu_r;
             }
         }
 
@@ -163,6 +205,9 @@ static void debug_mode() {
             anim_player.current_animation = current_anim;
             anim_player.anim_frame = 0;
             anim_player.anim_keyframe = 0;
+            anim_player.sprite = luigi_neu_r;
+            player_dbg_newframe();
+            player_anim_run_keyframe(&anim_player, &empty_input, &empty_input, anim_player.animations[anim_player.current_animation], NULL, 0, false);
         }
 
         gfx_FillScreen(COLOR_BG);
@@ -200,11 +245,16 @@ static void debug_mode() {
                 gfx_PrintString("Playback off");
             }
             next_line();
+            gfx_PrintString("Current Keyframe: ");
+            gfx_PrintInt(anim_player.anim_keyframe, 2);
+            next_line();
             gfx_PrintString("Current Frame: ");
             gfx_PrintInt(anim_player.anim_frame, 2);
             next_line();
             gfx_PrintString("Current Anim: ");
             gfx_PrintInt(current_anim, 2);
+            gfx_PrintString(" ");
+            gfx_PrintString(anim_type_name(current_anim));
         }
 
         gfx_SwapDraw();
