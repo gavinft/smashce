@@ -18,6 +18,7 @@ typedef struct {
 typedef enum {
     ANIM_NEUTRAL,
     ANIM_LEDGE_GRAB,
+    ANIM_JUMP,
     ANIM_ATTACK,
     ANIM_AIR_NEU,
     ANIM_AIR_FWD,

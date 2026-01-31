@@ -102,7 +102,10 @@ void player_set_charac(player_t *player, player_char_t charac) {
 }
 
 void player_jump(player_t *player) {
-    player->rb.vel.y = player->jump_vel;
+    // player->rb.vel.y = player->jump_vel;
+    // animation handles this now
+    player_set_anim(player, ANIM_JUMP, false);
+
     player->can_grab_ledge = true;
     if (player->rb.grounded || player->grabbed_ledge)
         return;

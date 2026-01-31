@@ -154,6 +154,17 @@ static bool ledge_check_leave(player_t* player, input_t* input, input_t* last_in
     return false;
 }
 
+static bool jump1(player_t* player, input_t* input, input_t* last_input, player_t* hitboxes, size_t num_hitboxes) {
+    player->rb.vel.y = player->jump_vel;
+    return false;
+}
+
+static bool jump2(player_t* player, input_t* input, input_t* last_input, player_t* hitboxes, size_t num_hitboxes) {
+    if (!input->jump)
+        player->rb.vel.y *= 0.6f;
+    return false;
+}
+
 // for use in every ledge grab anim
 #define ACTION_LEDGE_LEAVE (frame_data_t){ .type = FRAME_CUSTOM_FUNC, .data.custom_function = ledge_check_leave }
 
@@ -186,6 +197,21 @@ animation_t luigi_ledge_grab = {
     .total_frames = 1,
     .num_keyframes = 1,
     .frames = l_ledge_keyframes
+};
+
+animation_t luigi_jump = {
+    .total_frames = 2,
+    .num_keyframes = 2,
+    .frames = (keyframe_t[]){
+        {.frame_number = 0, .duration = 1, .num_actions = 2, .frame_actions = (frame_data_t[]){
+            {.type = FRAME_SET_SPRITE, .data.sprite = both_sprites(luigi_neu)},
+            {.type = FRAME_CUSTOM_FUNC, .data.custom_function = jump1}
+        }},
+        {.frame_number = 1, .duration = 1, .num_actions = 2, .frame_actions = (frame_data_t[]){
+            {.type = FRAME_CUSTOM_FUNC, .data.custom_function = jump2},
+            {.type = FRAME_CUSTOM_FUNC, .data.custom_function = neutral_scan_attacks}
+        }},
+    }
 };
 
 // //
@@ -425,7 +451,7 @@ animation_t luigi_down_special = {
 };
 
 animation_t* luigi_animations[] = {
-    &luigi_neutral, &luigi_ledge_grab, &luigi_jab,
+    &luigi_neutral, &luigi_ledge_grab, &luigi_jump, &luigi_jab,
     &luigi_neu_air, &luigi_forward_air, &luigi_back_air,
     &luigi_up_air, &luigi_down_air, NULL, 
     &luigi_missile, &luigi_up_special, &luigi_down_special
