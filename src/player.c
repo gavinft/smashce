@@ -79,7 +79,7 @@ void player_set_charac(player_t *player, player_char_t charac) {
                             .pos = {170, 30},
                             .extent = {luigi_neu_r_width / 2.0f, luigi_neu_r_height / 2.0f}
                         },
-                        .friction = 0.4f
+                        .friction = 0.3f
                     },
                     .resistance = 0.1f,
                     .inv_mass = 1 / 2.0f,
