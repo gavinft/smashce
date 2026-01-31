@@ -20,6 +20,7 @@ typedef struct {
 typedef struct {
     box_t box;
     float friction;
+    bool top_only;
 } collider_t;
 
 typedef struct {

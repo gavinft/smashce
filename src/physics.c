@@ -127,13 +127,18 @@ void phy_step(float dt) {
 
             // the later intersect is when we actually intersect,
             // so the later intersect is the side that we enter from
-            if (xt < 0 && yt < 0) {
+            if (that->top_only) {
+                if (overlap_top && rb->vel.y > 0 && yt >= xt) {
+                    goto resolve_y;
+                }
+            } else if (xt < 0 && yt < 0) {
                 // TODO
                 continue;
             } else if (xt > yt) {
                 fix_pos_x(&predict, that, overlap_left, overlap_right);
                 fix_vel_x(rb, overlap_left, overlap_right);
             } else { // yt >= xt
+                resolve_y:
                 fix_pos_y(&predict, that, overlap_top, overlap_bottom);
                 fix_vel_y(rb, overlap_top, overlap_bottom);
                 

@@ -15,12 +15,12 @@
 clock_t last_time;
 #define FRAME_TIME CLOCKS_PER_SEC / 30.0
 
-collider_t stage_col = {.box = {.pos = {GFX_LCD_WIDTH / 2, GFX_LCD_HEIGHT - 28 + 1}, .extent = {119, 28}}, .friction = 1.3f};
+collider_t stage_col = {.box = {.pos = {GFX_LCD_WIDTH / 2, GFX_LCD_HEIGHT - 28 + 1}, .extent = {119, 28}}, .friction = 1.3f, .top_only = false};
 // collider_t box_col = {.box = {.pos = {160, 110}, .extent = {20, 20}}, .friction = 0.3f};
 collider_t platforms[] = {
-    {.box = {.pos = {160, 110}, .extent = {24, 1.5f}}, .friction = 1.3f},
-    {.box = {.pos = {90, 140}, .extent = {24, 1.5f}}, .friction = 1.3f},
-    {.box = {.pos = {GFX_LCD_WIDTH - 90, 140}, .extent = {24, 1.5f}}, .friction = 1.3f}
+    {.box = {.pos = {160, 110}, .extent = {24, 1.5f}}, .friction = 1.3f, .top_only = true},
+    {.box = {.pos = {90, 140}, .extent = {24, 1.5f}}, .friction = 1.3f, .top_only = true},
+    {.box = {.pos = {GFX_LCD_WIDTH - 90, 140}, .extent = {24, 1.5f}}, .friction = 1.3f, .top_only = true}
 };
 ledge_t left_ledge = {.box = {.pos = {35, 188}, .extent = {7, 10}}, .grab_dir = DIR_RIGHT};
 ledge_t right_ledge = {.box = {.pos = {GFX_LCD_WIDTH - 35, 188}, .extent = {7, 10}}, .grab_dir = DIR_LEFT};
