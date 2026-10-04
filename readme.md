@@ -21,7 +21,7 @@ Super smash brothers for the ti 84 + ce
   * alternatively supports one player controlled by calculator keypad
     * plans to support link cable style play
 * animation system
-  * data based (see [animations.c](src/animations.c) )
+  * data based (see [animations.c](src/animations.c))
     * but can also run custom procedures
   * can have different hurtboxes per frame
 * windows for off-screen players
@@ -34,9 +34,9 @@ Super smash brothers for the ti 84 + ce
 
 1. generate graphics files with `make gfx`
 2. build release or debug
-  * for release (normal), build with `make`
-  * if you want to see hitboxes or access the animation debug menu (accessible with `0`), then build with `make debug`
-  * if you switch between these, make sure to `make clean` in between
+    1. for release (normal), build with `make`
+    2. if you want to see hitboxes or access the animation debug menu (accessible with `0`), then build with `make debug`
+    3. if you switch between these, make sure to `make clean` in between
 3. transfer the file to your calculator or to an emulator like [CEmu](https://ce-programming.github.io/CEmu/)
-  * some calculators need to be jailbroken
-  * if you don't have them, you will need to install the clibs (app will explain)
+    1. some calculators need to be jailbroken
+    2. if you don't have them, you will need to install the clibs (app will explain)
