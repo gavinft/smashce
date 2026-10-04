@@ -24,6 +24,7 @@ Super smash brothers for the ti 84 + ce
   * data based (see (animations.c)[src/animations.c])
     * but can also run custom procedures
   * can have different hurtboxes per frame
+* windows for off-screen players
 
 ![Luigi's backair attack framedata](media/backair.webp) ![Luigi's down special attack framedata](media/downb.webp)
 
